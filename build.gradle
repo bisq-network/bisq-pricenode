@@ -25,10 +25,6 @@ java {
     }
 }
 
-compileJava {
-    options.release = 11
-}
-
 jar.manifest.attributes(
         "Implementation-Title": project.name,
         "Implementation-Version": version
