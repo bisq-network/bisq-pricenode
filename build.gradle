@@ -1,0 +1,74 @@
+plugins {
+    id 'application'
+    alias(libs.plugins.springboot)
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+}
+
+group 'bisq'
+
+apply plugin: "org.springframework.boot"
+apply plugin: 'io.spring.dependency-management'
+
+version = file("src/main/resources/version.txt").text.trim()
+
+application {
+    project.mainClassName = 'bisq.price.Main'
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(11))
+    }
+}
+
+compileJava {
+    options.release = 11
+}
+
+jar.manifest.attributes(
+        "Implementation-Title": project.name,
+        "Implementation-Version": version
+)
+
+configurations.all {
+    exclude group: 'bisq', module: 'proto'
+    exclude group: 'bisq', module: 'p2p'
+    exclude group: 'com.github.bisq-network:bitcoinj'
+    exclude group: 'com.github.bisq-network.netlayer'
+    exclude group: 'com.github.bisq-network.tor-binary'
+    exclude group: 'io.grpc'
+    exclude group: 'org.fxmisc.easybind'
+}
+
+dependencies {
+    // We need three subprojects from includeBuild('bisq'), with some of their transitive dependencies.
+    implementation 'bisq:assets'
+    implementation 'bisq:common'
+    implementation 'bisq:core'
+
+    implementation libs.bundles.knowm.xchange.libs
+
+    implementation libs.logback.core
+    implementation libs.logback.classic
+    compileOnly libs.lombok
+    annotationProcessor libs.lombok
+    implementation libs.slf4j.api
+
+    implementation(libs.spring.boot.starter.web) {
+        exclude group: 'ch.qos.logback'
+        exclude group: 'org.slf4j'
+    }
+
+    testAnnotationProcessor libs.lombok
+    testCompileOnly libs.lombok
+    testImplementation libs.junit.jupiter
+    testImplementation libs.mockito.core
+}
+
+test {
+    useJUnitPlatform()
+}

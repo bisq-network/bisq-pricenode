@@ -1,0 +1,65 @@
+# Version Catalogs documentation: https://docs.gradle.org/7.4.2/userguide/platforms.html
+# Used in the [libraries] and [bundles] sections below using version.ref
+# See https://docs.gradle.org/7.4.2/userguide/rich_versions.html for keywords (strictly / required / prefer / reject)
+# Convention: mark all versions using 'strictly'. This ensures only one version is allowed in the dependency tree, even
+# when multiple versions are attempted to be brought in as transitive dependencies of other requirements.
+[versions]
+
+junit-jupiter-lib = { strictly = '5.8.2' }
+knowm-xchange-lib = { strictly = '5.0.13' }
+logback-lib = { strictly = '1.2.6' }
+lombok-lib = { strictly = '1.18.22' }
+mockito-lib = { strictly = '4.0.0' }
+slf4j-lib = { strictly = '1.7.36' }
+spring-dependency-management-plugin-lib = { strictly = '1.0.12.RELEASE' }
+spring-plugin-lib = { strictly = '2.5.6' }
+spring-boot-starter-web-lib = { strictly = '2.5.6' }
+
+# Referenced in subproject's build.gradle > dependencies block in the form 'implementation libs.guava'
+# Note: keys can contain dash (protobuf-java) but the dash is replaced by dot when referenced
+# in a build.gradle ('implementation libs.protobuf.java')
+[libraries]
+
+junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-jupiter-lib' }
+knowm-xchange-binance = { module = 'org.knowm.xchange:xchange-binance', version.ref = 'knowm-xchange-lib' }
+knowm-xchange-bitbay = { module = 'org.knowm.xchange:xchange-bitbay', version.ref = 'knowm-xchange-lib' }
+known-xchange-bitfinex = { module = 'org.knowm.xchange:xchange-bitfinex', version.ref = 'knowm-xchange-lib' }
+known-xchange-bitflyer = { module = 'org.knowm.xchange:xchange-bitflyer', version.ref = 'knowm-xchange-lib' }
+known-xchange-bitstamp = { module = 'org.knowm.xchange:xchange-bitstamp', version.ref = 'knowm-xchange-lib' }
+known-xchange-btcmarkets = { module = 'org.knowm.xchange:xchange-btcmarkets', version.ref = 'knowm-xchange-lib' }
+known-xchange-cexio = { module = 'org.knowm.xchange:xchange-cexio', version.ref = 'knowm-xchange-lib' }
+known-xchange-coinbasepro = { module = 'org.knowm.xchange:xchange-coinbasepro', version.ref = 'knowm-xchange-lib' }
+known-xchange-coinmarketcap = { module = 'org.knowm.xchange:xchange-coinmarketcap', version.ref = 'knowm-xchange-lib' }
+known-xchange-coinmate = { module = 'org.knowm.xchange:xchange-coinmate', version.ref = 'knowm-xchange-lib' }
+known-xchange-coinone = { module = 'org.knowm.xchange:xchange-coinone', version.ref = 'knowm-xchange-lib' }
+known-xchange-exmo = { module = 'org.knowm.xchange:xchange-exmo', version.ref = 'knowm-xchange-lib' }
+known-xchange-hitbtc = { module = 'org.knowm.xchange:xchange-hitbtc', version.ref = 'knowm-xchange-lib' }
+known-xchange-huobi = { module = 'org.knowm.xchange:xchange-huobi', version.ref = 'knowm-xchange-lib' }
+known-xchange-independentreserve = { module = 'org.knowm.xchange:xchange-independentreserve', version.ref = 'knowm-xchange-lib' }
+known-xchange-kraken = { module = 'org.knowm.xchange:xchange-kraken', version.ref = 'knowm-xchange-lib' }
+known-xchange-luno = { module = 'org.knowm.xchange:xchange-luno', version.ref = 'knowm-xchange-lib' }
+known-xchange-mercadobitcoin = { module = 'org.knowm.xchange:xchange-mercadobitcoin', version.ref = 'knowm-xchange-lib' }
+known-xchange-paribu = { module = 'org.knowm.xchange:xchange-paribu', version.ref = 'knowm-xchange-lib' }
+known-xchange-poloniex = { module = 'org.knowm.xchange:xchange-poloniex', version.ref = 'knowm-xchange-lib' }
+known-xchange-quoine = { module = 'org.knowm.xchange:xchange-quoine', version.ref = 'knowm-xchange-lib' }
+logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback-lib' }
+logback-classic = { module = 'ch.qos.logback:logback-classic', version.ref = 'logback-lib' }
+lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
+mockito-core = { module = 'org.mockito:mockito-core', version.ref = 'mockito-lib' }
+slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j-lib' }
+spring-dependency-management-plugin = { module = 'io.spring.gradle:dependency-management-plugin', version.ref = 'spring-dependency-management-plugin-lib' }
+spring-boot-starter-web = { module = 'org.springframework.boot:spring-boot-starter-web', version.ref = 'spring-boot-starter-web-lib' }
+
+[bundles]
+knowm-xchange-libs = [
+    'knowm-xchange-binance', 'knowm-xchange-bitbay', 'known-xchange-bitfinex',
+    'known-xchange-bitflyer', 'known-xchange-bitstamp', 'known-xchange-btcmarkets', 'known-xchange-cexio',
+    'known-xchange-coinbasepro', 'known-xchange-coinmarketcap', 'known-xchange-coinmate', 'known-xchange-coinone',
+    'known-xchange-exmo', 'known-xchange-hitbtc', 'known-xchange-huobi', 'known-xchange-independentreserve',
+    'known-xchange-kraken', 'known-xchange-luno', 'known-xchange-mercadobitcoin', 'known-xchange-paribu',
+    'known-xchange-poloniex', 'known-xchange-quoine'
+]
+
+[plugins]
+springboot = { id = 'org.springframework.boot', version.ref = 'spring-plugin-lib' }
+springdependency = { id = 'io.spring.dependency-management', version.ref = 'spring-dependency-management-plugin-lib' }

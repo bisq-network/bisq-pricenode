@@ -2,16 +2,14 @@ package bisq.price;
 
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
-
 import com.google.common.collect.Sets;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import lombok.extern.slf4j.Slf4j;
-
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 public abstract class AbstractExchangeRateProviderTest {
@@ -60,7 +58,7 @@ public abstract class AbstractExchangeRateProviderTest {
                 exchangeProvider.getSupportedFiatCurrencies());
 
         Set unsupportedCurrencies = Sets.difference(retrievedRatesCurrencies, supportedCurrencies);
-        assertTrue("Retrieved exchange rates contain unsupported currencies: " + unsupportedCurrencies,
-                unsupportedCurrencies.isEmpty());
+        assertTrue(unsupportedCurrencies.isEmpty(),
+                "Retrieved exchange rates contain unsupported currencies: " + unsupportedCurrencies);
     }
 }

@@ -19,17 +19,15 @@ package bisq.price.mining.providers;
 
 import bisq.price.mining.FeeRate;
 import bisq.price.mining.FeeRateProvider;
-
+import org.junit.jupiter.api.Test;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.web.client.RestClientException;
 
 import java.time.Instant;
 
-import org.junit.jupiter.api.Test;
-
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Tests specific to a {@link MempoolFeeRateProvider} which queries one API endpoint. For
@@ -69,7 +67,8 @@ public class MempoolFeeRateProviderTest {
         dummyProvider.start();
         try {
             sleep(1000);
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+        }
         dummyProvider.stop();
 
         return dummyProvider;
@@ -92,7 +91,8 @@ public class MempoolFeeRateProviderTest {
         dummyProvider.start();
         try {
             sleep(1000);
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+        }
         dummyProvider.stop();
 
         return dummyProvider;
