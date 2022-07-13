@@ -26,6 +26,27 @@ To run a pricenode, you will need:
 
   - JDK 8 if you want to build and run a node locally.
   - The `tor` binary (e.g. `brew install tor`) if you want to run a hidden service locally.
+  
+## Building source code
+
+This repo has a dependency on git submodule [bisq](https://github.com/bisq-network/bisq).  There are two ways to clone it before it can be compiled:
+
+```
+# 1) Use the --recursive option in the clone command:
+$ git clone --recursive  https://github.com/bisq-network/bisq-pricenode.git
+
+# 2) Do a normal clone, and pull down the bisq repo dependency with two git submodule commands:
+$ git clone https://github.com/bisq-network/bisq-pricenode.git
+$ cd bisq-pricenode
+$ git submodule init
+$ git submodule update
+```
+
+To build:
+```
+$ ./gradlew clean build
+```
+
 
 ## How to deploy for production
 
