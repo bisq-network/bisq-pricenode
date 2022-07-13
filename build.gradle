@@ -1,5 +1,6 @@
 plugins {
     id 'application'
+    alias(libs.plugins.osdetector)
     alias(libs.plugins.springboot)
 }
 
@@ -10,6 +11,7 @@ repositories {
 
 group 'bisq'
 
+apply plugin: 'com.google.osdetector'
 apply plugin: "org.springframework.boot"
 apply plugin: 'io.spring.dependency-management'
 
@@ -23,10 +25,6 @@ java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
     }
-}
-
-compileJava {
-    options.release = 11
 }
 
 jar.manifest.attributes(
@@ -67,6 +65,51 @@ dependencies {
     testCompileOnly libs.lombok
     testImplementation libs.junit.jupiter
     testImplementation libs.mockito.core
+}
+
+assemble {
+    doLast {
+        // Copy generated bisq-pricenode scripts to project's root dir.
+        copy {
+            from layout.buildDirectory.dir('scripts')
+            into projectDir
+        }
+        // Copy zipped distribution libs to project's top-level lib dir.
+        copy {
+            def distFolderName = project.name + '-' + version
+            def distZipName = buildDir.name + '/distributions/' + distFolderName + '.zip'
+            from(zipTree(distZipName)) {
+                include "$distFolderName/lib/**"
+                eachFile { fcd ->
+                    fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(2))
+                }
+                includeEmptyDirs = false
+            }
+            into "${projectDir}/lib"
+        }
+        // Edit generated shell script so it expects to be executed in
+        // the project's root dir as opposed to a 'bin' subdirectory.
+        if (osdetector.os != 'windows') {
+            // Delete the windows .bat script, not the *nix script alone.
+            delete fileTree(dir: projectDir, include: 'bisq-*.bat')
+            // Reset APP_HOME variable in *nix script.
+            def nixScriptFile = file("${projectDir}/${project.name}")
+            def oldAppHome = 'APP_HOME=$( cd "${APP_HOME:-./}.." && pwd -P ) || exit'
+            def newAppHome = 'APP_HOME=$( cd "${APP_HOME:-./}" && pwd -P ) || exit'
+            nixScriptFile.text = nixScriptFile.text.replace(oldAppHome, newAppHome)
+        } else {
+            // Delete the *nix script, not the windows .bat script.
+            delete fileTree(dir: projectDir, include: 'bisq-*', exclude: '*.bat')
+            // Reset APP_HOME variable in windows .bat script.
+            def windowsScriptFile = file("${projectDir}/${project.name}.bat")
+            windowsScriptFile.text = windowsScriptFile.text.replace('set APP_HOME=%DIRNAME%..', 'set APP_HOME=%DIRNAME%')
+        }
+    }
+}
+
+clean.doFirst {
+    // Remove the project root level 'bisq-*' scripts and 'lib' dir generated at the end of the assemble task.
+    delete fileTree(dir: projectDir, include: 'bisq-*'), 'lib'
 }
 
 test {

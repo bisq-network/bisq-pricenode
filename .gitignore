@@ -1,4 +1,7 @@
 .gradle
 .idea
 build
+bisq-pricenode
+bisq-pricenode.bat
+lib
 
