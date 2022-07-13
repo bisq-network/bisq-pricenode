@@ -10,6 +10,7 @@ knowm-xchange-lib = { strictly = '5.0.13' }
 logback-lib = { strictly = '1.2.6' }
 lombok-lib = { strictly = '1.18.22' }
 mockito-lib = { strictly = '4.0.0' }
+osdetector-plugin-lib = { strictly = '1.7.0' }
 slf4j-lib = { strictly = '1.7.36' }
 spring-dependency-management-plugin-lib = { strictly = '1.0.12.RELEASE' }
 spring-plugin-lib = { strictly = '2.5.6' }
@@ -61,5 +62,6 @@ knowm-xchange-libs = [
 ]
 
 [plugins]
+osdetector = { id = 'com.google.osdetector', version.ref = 'osdetector-plugin-lib' }
 springboot = { id = 'org.springframework.boot', version.ref = 'spring-plugin-lib' }
 springdependency = { id = 'io.spring.dependency-management', version.ref = 'spring-dependency-management-plugin-lib' }
