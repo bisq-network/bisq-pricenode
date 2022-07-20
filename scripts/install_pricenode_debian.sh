@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
+# Usage: `$ sudo ./install_pricenode_debian.sh`
+
 echo "[*] Bisq bisq-pricenode installation script"
 
 ##### change as necessary for your system
@@ -16,11 +18,11 @@ BISQ_USER=bisq
 BISQ_GROUP=bisq
 BISQ_HOME=/bisq
 
-BISQ_REPO_URL=https://github.com/bisq-network/bisq
-BISQ_REPO_NAME=bisq
-BISQ_REPO_TAG=master
-BISQ_LATEST_RELEASE=master
-BISQ_TORHS=pricenode
+BISQ_REPO_URL=https://github.com/bisq-network/bisq-pricenode
+BISQ_REPO_NAME=bisq-pricenode
+BISQ_REPO_TAG=main
+BISQ_LATEST_RELEASE=main
+BISQ_TORHS=bisq-pricenode
 
 TOR_PKG="tor"
 #TOR_USER=debian-tor
@@ -58,7 +60,7 @@ sudo -H -i -u "${ROOT_USER}" chown "${BISQ_USER}":"${BISQ_GROUP}" ${BISQ_HOME}
 
 echo "[*] Cloning Bisq repo"
 sudo -H -i -u "${BISQ_USER}" git config --global advice.detachedHead false
-sudo -H -i -u "${BISQ_USER}" git clone --branch "${BISQ_REPO_TAG}" "${BISQ_REPO_URL}" "${BISQ_HOME}/${BISQ_REPO_NAME}"
+sudo -H -i -u "${BISQ_USER}" git clone --recursive --branch "${BISQ_REPO_TAG}" "${BISQ_REPO_URL}" "${BISQ_HOME}/${BISQ_REPO_NAME}"
 
 echo "[*] Installing OpenJDK 11"
 sudo -H -i -u "${ROOT_USER}" apt-get install -qq -y openjdk-11-jdk
@@ -70,11 +72,12 @@ echo "[*] Performing Git LFS pull"
 sudo -H -i -u "${BISQ_USER}" sh -c "cd ${BISQ_HOME}/${BISQ_REPO_NAME} && git lfs pull"
 
 echo "[*] Building Bisq from source"
-sudo -H -i -u "${BISQ_USER}" sh -c "cd ${BISQ_HOME}/${BISQ_REPO_NAME} && ./gradlew :pricenode:installDist  -x test < /dev/null" # redirect from /dev/null is necessary to workaround gradlew non-interactive shell hanging issue
+# Redirect from /dev/null is necessary to workaround gradlew non-interactive shell hanging issue.
+sudo -H -i -u "${BISQ_USER}" sh -c "cd ${BISQ_HOME}/${BISQ_REPO_NAME} && ./gradlew build  -x test < /dev/null"
 
 echo "[*] Installing bisq-pricenode systemd service"
-sudo -H -i -u "${ROOT_USER}" install -c -o "${ROOT_USER}" -g "${ROOT_GROUP}" -m 644 "${BISQ_HOME}/${BISQ_REPO_NAME}/pricenode/bisq-pricenode.service" "${SYSTEMD_SERVICE_HOME}"
-sudo -H -i -u "${ROOT_USER}" install -c -o "${ROOT_USER}" -g "${ROOT_GROUP}" -m 644 "${BISQ_HOME}/${BISQ_REPO_NAME}/pricenode/bisq-pricenode.env" "${SYSTEMD_ENV_HOME}"
+sudo -H -i -u "${ROOT_USER}" install -c -o "${ROOT_USER}" -g "${ROOT_GROUP}" -m 644 "${BISQ_HOME}/${BISQ_REPO_NAME}/scripts/bisq-pricenode.service" "${SYSTEMD_SERVICE_HOME}"
+sudo -H -i -u "${ROOT_USER}" install -c -o "${ROOT_USER}" -g "${ROOT_GROUP}" -m 644 "${BISQ_HOME}/${BISQ_REPO_NAME}/scripts/bisq-pricenode.env" "${SYSTEMD_ENV_HOME}"
 
 echo "[*] Reloading systemd daemon configuration"
 sudo -H -i -u "${ROOT_USER}" systemctl daemon-reload
