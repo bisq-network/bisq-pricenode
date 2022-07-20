@@ -17,11 +17,9 @@
 
 package bisq.price.spot;
 
-import bisq.price.PriceProvider;
-
 import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.TradeCurrency;
-
+import bisq.price.PriceProvider;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.currency.Currency;
@@ -32,21 +30,11 @@ import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
 import org.knowm.xchange.service.marketdata.MarketDataService;
 import org.knowm.xchange.service.marketdata.params.CurrencyPairsParam;
 import org.knowm.xchange.service.marketdata.params.Params;
-
 import org.springframework.core.env.Environment;
 
-import java.time.Duration;
-
 import java.io.IOException;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.time.Duration;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -64,7 +52,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
 
     private static Set<String> SUPPORTED_CRYPTO_CURRENCIES = new HashSet<>();
     private static Set<String> SUPPORTED_FIAT_CURRENCIES = new HashSet<>();
-    private Set<String> providerExclusionList = new HashSet<>();
+    private final Set<String> providerExclusionList = new HashSet<>();
     private final String name;
     private final String prefix;
     private final Environment env;
@@ -74,17 +62,17 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         this.name = name;
         this.prefix = prefix;
         this.env = env;
-        List<String> excludedByProvider =
-                Arrays.asList(env.getProperty("bisq.price.fiatcurrency.excludedByProvider", "")
-                        .toUpperCase().trim().split("\\s*,\\s*"));
-        for (String s: excludedByProvider) {
+        String[] excludedByProvider =
+                env.getProperty("bisq.price.fiatcurrency.excludedByProvider", "")
+                        .toUpperCase().trim().split("\\s*,\\s*");
+        for (String s : excludedByProvider) {
             String[] splits = s.split(":");
             if (splits.length == 2 && splits[0].equalsIgnoreCase(name) && CurrencyUtil.isFiatCurrency(splits[1])) {
-                    providerExclusionList.add(splits[1]);
-                }
+                providerExclusionList.add(splits[1]);
             }
+        }
         if (providerExclusionList.size() > 0) {
-            log.info("{} specific exclusion list={}", name, providerExclusionList.toString());
+            log.info("{} specific exclusion list={}", name, providerExclusionList);
         }
     }
 
@@ -140,8 +128,8 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
     @Override
     protected void onRefresh() {
         get().stream()
-            .filter(e -> "USD".equals(e.getCurrency()) || "LTC".equals(e.getCurrency()))
-            .forEach(e -> log.info("BTC/{}: {}", e.getCurrency(), e.getPrice()));
+                .filter(e -> "USD".equals(e.getCurrency()) || "LTC".equals(e.getCurrency()))
+                .forEach(e -> log.info("BTC/{}: {}", e.getCurrency(), e.getPrice()));
     }
 
     /**
@@ -149,12 +137,11 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
      *                      polled
      * @return Exchange rates for Bisq-supported fiat currencies and altcoins in the
      * specified {@link Exchange}
-     *
      * @see CurrencyUtil#getAllSortedFiatCurrencies()
      * @see CurrencyUtil#getAllSortedCryptoCurrencies()
      */
     protected Set<ExchangeRate> doGet(Class<? extends Exchange> exchangeClass) {
-        Set<ExchangeRate> result = new HashSet<ExchangeRate>();
+        Set<ExchangeRate> result = new HashSet<>();
 
         // Initialize XChange objects
         Exchange exchange = ExchangeFactory.INSTANCE.createExchange(exchangeClass.getName());

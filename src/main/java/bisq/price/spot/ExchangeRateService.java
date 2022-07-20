@@ -17,24 +17,12 @@
 
 package bisq.price.spot;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import static java.util.Arrays.asList;
+import java.util.*;
 
 /**
  * High-level {@link ExchangeRate} data operations.
@@ -72,9 +60,8 @@ class ExchangeRateService {
             metadata.putAll(getMetadata(p, exchangeRates));
         });
 
-        LinkedHashMap<String, Object> result = new LinkedHashMap<>();
-        result.putAll(metadata);
-        // Use a sorted list by currency code to make comparision of json data between
+        LinkedHashMap<String, Object> result = new LinkedHashMap<>(metadata);
+        // Use a sorted list by currency code to make comparison of json data between
         // different price nodes easier
         List<ExchangeRate> values = new ArrayList<>(aggregateExchangeRates.values());
         values.sort(Comparator.comparing(ExchangeRate::getCurrency));
@@ -147,7 +134,7 @@ class ExchangeRateService {
                     l.add(exchangeRate);
                     currencyCodeToExchangeRates.put(currencyCode, l);
                 } else {
-                    currencyCodeToExchangeRates.put(currencyCode, asList(exchangeRate));
+                    currencyCodeToExchangeRates.put(currencyCode, List.of(exchangeRate));
                 }
             }
         }
@@ -179,9 +166,9 @@ class ExchangeRateService {
 
     private long getTimestamp(ExchangeRateProvider provider, Set<ExchangeRate> exchangeRates) {
         return exchangeRates.stream()
-            .filter(e -> provider.getName().equals(e.getProvider()))
-            .findFirst()
-            .orElseThrow(() -> new IllegalStateException("No exchange rate data found for " + provider.getName()))
-            .getTimestamp();
+                .filter(e -> provider.getName().equals(e.getProvider()))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No exchange rate data found for " + provider.getName()))
+                .getTimestamp();
     }
 }
