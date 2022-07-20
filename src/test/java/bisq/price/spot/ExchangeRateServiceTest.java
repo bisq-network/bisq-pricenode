@@ -18,40 +18,25 @@
 package bisq.price.spot;
 
 import bisq.core.locale.CurrencyUtil;
-
-import org.springframework.core.env.Environment;
-import org.springframework.core.env.StandardEnvironment;
-
-import com.google.common.collect.Sets;
-
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
-
-import java.time.Duration;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.OptionalDouble;
-import java.util.Set;
-import java.util.stream.Collectors;
-
-import org.slf4j.LoggerFactory;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
-
+import com.google.common.collect.Sets;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.StandardEnvironment;
+
+import java.time.Duration;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
-
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -231,9 +216,9 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
-     * @param retrievedData Response data retrieved from the {@link ExchangeRateService}
-     * @param provider {@link ExchangeRateProvider} available to the
-     * {@link ExchangeRateService}
+     * @param retrievedData                   Response data retrieved from the {@link ExchangeRateService}
+     * @param provider                        {@link ExchangeRateProvider} available to the
+     *                                        {@link ExchangeRateService}
      * @param numberOfCurrencyPairsOnExchange Number of currency pairs this exchange was
      *                                        initiated with
      */
@@ -254,8 +239,8 @@ public class ExchangeRateServiceTest {
      * Performs generic sanity checks on the response format and contents.
      *
      * @param retrievedData Response data retrieved from the {@link ExchangeRateService}
-     * @param providers List of all {@link ExchangeRateProvider#getPrefix()} the
-     * {@link ExchangeRateService} uses
+     * @param providers     List of all {@link ExchangeRateProvider#getPrefix()} the
+     *                      {@link ExchangeRateService} uses
      */
     private void doSanityChecksForRetrievedDataMultipleProviders(Map<String, Object> retrievedData,
                                                                  List<ExchangeRateProvider> providers) {
@@ -363,7 +348,8 @@ public class ExchangeRateServiceTest {
         dummyProvider.start();
         try {
             sleep(1000);
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+        }
         dummyProvider.stop();
 
         return dummyProvider;
@@ -402,7 +388,8 @@ public class ExchangeRateServiceTest {
         dummyProvider.start();
         try {
             sleep(1000);
-        } catch (InterruptedException e) { }
+        } catch (InterruptedException e) {
+        }
         dummyProvider.stop();
 
         return dummyProvider;

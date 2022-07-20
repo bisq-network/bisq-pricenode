@@ -18,12 +18,9 @@
 package bisq.price.spot.providers;
 
 import bisq.price.AbstractExchangeRateProviderTest;
-
-import org.springframework.core.env.StandardEnvironment;
-
 import lombok.extern.slf4j.Slf4j;
-
 import org.junit.jupiter.api.Test;
+import org.springframework.core.env.StandardEnvironment;
 
 @Slf4j
 public class BitstampTest extends AbstractExchangeRateProviderTest {
