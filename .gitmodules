@@ -1,7 +1,3 @@
 [submodule "bisq"]
 	path = bisq
 	url = https://github.com/bisq-network/bisq.git
-[submodule "bisq-gradle"]
-	path = bisq-gradle
-	url = https://github.com/ghubstan/bisq-gradle.git
-	branch = add-post-build-plugin
