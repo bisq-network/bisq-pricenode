@@ -1,2 +1,3 @@
 rootProject.name = 'bisq-pricenode'
 includeBuild('bisq')
+includeBuild('bisq-gradle')

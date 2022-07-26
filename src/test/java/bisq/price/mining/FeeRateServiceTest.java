@@ -1,18 +1,15 @@
 package bisq.price.mining;
 
-import bisq.price.mining.providers.MempoolFeeRateProviderTest;
-
 import bisq.common.config.Config;
+import bisq.price.mining.providers.MempoolFeeRateProviderTest;
+import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import org.junit.jupiter.api.Test;
 
 import static bisq.price.mining.providers.MempoolFeeRateProviderTest.buildDummyReachableMempoolFeeRateProvider;
 import static bisq.price.mining.providers.MempoolFeeRateProviderTest.buildDummyUnreachableMempoolFeeRateProvider;
@@ -23,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 /**
  * Tests the {@link bisq.price.mining.FeeRateService}, which can aggregate data from
  * several {@link FeeRateProvider}s.
+ *
  * @see MempoolFeeRateProviderTest
  */
 public class FeeRateServiceTest {

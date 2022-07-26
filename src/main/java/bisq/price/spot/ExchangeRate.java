@@ -20,7 +20,6 @@ package bisq.price.spot;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
-
 import java.util.Date;
 import java.util.Objects;
 
@@ -37,10 +36,10 @@ public class ExchangeRate {
 
     public ExchangeRate(String currency, BigDecimal price, Date timestamp, String provider) {
         this(
-            currency,
-            price.doubleValue(),
-            timestamp.getTime(),
-            provider
+                currency,
+                price.doubleValue(),
+                timestamp.getTime(),
+                provider
         );
     }
 
@@ -77,9 +76,9 @@ public class ExchangeRate {
         if (o == null || getClass() != o.getClass()) return false;
         ExchangeRate exchangeRate = (ExchangeRate) o;
         return Double.compare(exchangeRate.price, price) == 0 &&
-            timestamp == exchangeRate.timestamp &&
-            Objects.equals(currency, exchangeRate.currency) &&
-            Objects.equals(provider, exchangeRate.provider);
+                timestamp == exchangeRate.timestamp &&
+                Objects.equals(currency, exchangeRate.currency) &&
+                Objects.equals(provider, exchangeRate.provider);
     }
 
     @Override
@@ -90,10 +89,10 @@ public class ExchangeRate {
     @Override
     public String toString() {
         return "ExchangeRate{" +
-            "currency='" + currency + '\'' +
-            ", price=" + price +
-            ", timestamp=" + timestamp +
-            ", provider=" + provider +
-            '}';
+                "currency='" + currency + '\'' +
+                ", price=" + price +
+                ", timestamp=" + timestamp +
+                ", provider=" + provider +
+                '}';
     }
 }
