@@ -1,6 +1,7 @@
 [submodule "bisq"]
 	path = bisq
 	url = https://github.com/bisq-network/bisq.git
+	branch = main
 [submodule "bisq-gradle"]
 	path = bisq-gradle
 	url = https://github.com/bisq-network/bisq-gradle.git
