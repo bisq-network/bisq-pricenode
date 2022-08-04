@@ -55,7 +55,7 @@ $ ./gradlew clean build
 Run the one-command installer:
 
 ```bash
-curl -s https://raw.githubusercontent.com/bisq-network/bisq/master/pricenode/install_pricenode_debian.sh | sudo bash
+curl -s https://raw.githubusercontent.com/bisq-network/bisq-pricenode/main/scripts/install_pricenode_debian.sh | sudo bash
 ```
 
 At the end of the installer script, it should print your Tor onion hostname.
@@ -76,13 +76,13 @@ curl http://localhost:8080/info
 If you run a main pricenode, you also are obliged to activate the monitoring feed by running
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/bisq-network/bisq/master/monitor/install_collectd_debian.sh)
+bash <(curl -s https://raw.githubusercontent.com/bisq-network/bisq-monitor/main/scripts/install_collectd_debian.sh)
 ```
 Follow the instruction given by the script and report your certificate to the [@bisq-network/monitoring](https://github.com/orgs/bisq-network/teams/monitoring-operators) team.
 
 Furthermore, you are obliged to provide network size data to the monitor by running
 ```bash
-curl -s https://raw.githubusercontent.com/bisq-network/bisq/master/pricenode/install_networksize_debian.sh | sudo bash
+curl -s https://raw.githubusercontent.com/bisq-network/bisq-pricenode/main/scripts/install_networksize_debian.sh | sudo bash
 ```
 
 ### Updating
@@ -94,7 +94,7 @@ Then build an updated pricenode:
 
 ## How to deploy elsewhere
 
- - [README-HEROKU.md](README-HEROKU.md)
+ - [docs/README-HEROKU.md](docs/README-HEROKU.md)
  - [docker/README.md](docker/README.md)
 
 

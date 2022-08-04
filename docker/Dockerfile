@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     sudo \
     openjfx && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/bisq-network/pricenode.git
-WORKDIR /pricenode/
+RUN git clone https://github.com/bisq-network/bisq-pricenode.git
+WORKDIR /bisq-pricenode/
 RUN ./gradlew assemble
 
 COPY loop.sh start_node.sh start_tor.sh ./
