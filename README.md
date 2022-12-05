@@ -15,9 +15,9 @@ Pricenodes can be deployed anywhere Java and Tor binaries can be run. Instructio
 
 Pricenodes should be cheap to run with regard to both time and money. The application itself is non-resource intensive and can be run on the low-end of most providers' paid tiers.
 
-A [pricenode operator](https://github.com/haveno-dex/roles/issues/5)'s main responsibilities are to ensure their node(s) are available and up-to-date. Releases are currently source-only, with the assumption that most operators will favor Git-based "push to deploy" workflows. To stay up to date with releases, operators can [subscribe to this repository's releases.atom feed](https://github.com/haveno-dex/pricenode/releases.atom) and/or get notifications in the `#pricenode` Slack channel.
+A [pricenode operator](https://github.com/haveno-dex/roles/issues/5)'s main responsibilities are to ensure their node(s) are available and up-to-date. Releases are currently source-only, with the assumption that most operators will favor Git-based "push to deploy" workflows. To stay up to date with releases, operators can [subscribe to this repository's releases.atom feed](https://github.com/haveno-dex/pricenode/releases.atom).
 
-Operating a production pricenode is a valuable service to the Haveno network, and operators should issue BSQ compensation requests accordingly.
+Operating a production pricenode is a valuable service to the Haveno network.
 
 
 ## Prerequisites for running a pricenode
