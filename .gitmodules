@@ -1,8 +1,6 @@
-[submodule "bisq"]
-	path = bisq
-	url = https://github.com/bisq-network/bisq.git
-	branch = master
-[submodule "bisq-gradle"]
-	path = bisq-gradle
-	url = https://github.com/bisq-network/bisq-gradle.git
-	branch = main
+[submodule "haveno-gradle"]
+	path = haveno-gradle
+	url = https://github.com/haveno-dex/haveno-gradle.git
+[submodule "haveno"]
+	path = haveno
+	url = https://github.com/haveno-dex/haveno.git

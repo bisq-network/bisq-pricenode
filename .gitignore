@@ -1,7 +1,10 @@
 .gradle
 .idea
+.project
+.settings
+.classpath
+bin
 build
-bisq-pricenode
-bisq-pricenode.bat
+haveno-pricenode
+haveno-pricenode.bat
 lib
-

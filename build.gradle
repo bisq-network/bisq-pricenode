@@ -1,7 +1,7 @@
 plugins {
     id 'application'
     alias(libs.plugins.springboot)
-    id 'bisq.post-build'
+    id 'haveno.post-build'
 }
 
 repositories {
@@ -9,7 +9,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 
-group 'bisq'
+group 'haveno'
 
 apply plugin: "org.springframework.boot"
 apply plugin: 'io.spring.dependency-management'
@@ -17,7 +17,7 @@ apply plugin: 'io.spring.dependency-management'
 version = file("src/main/resources/version.txt").text.trim()
 
 application {
-    project.mainClassName = 'bisq.price.Main'
+    project.mainClassName = 'haveno.price.Main'
 }
 
 java {
@@ -32,20 +32,20 @@ jar.manifest.attributes(
 )
 
 configurations.all {
-    exclude group: 'bisq', module: 'proto'
-    exclude group: 'bisq', module: 'p2p'
-    exclude group: 'com.github.bisq-network:bitcoinj'
-    exclude group: 'com.github.bisq-network.netlayer'
-    exclude group: 'com.github.bisq-network.tor-binary'
+    exclude group: 'haveno', module: 'proto'
+    exclude group: 'haveno', module: 'p2p'
+    exclude group: 'com.github.haveno-dex:bitcoinj'
+    exclude group: 'com.github.haveno-dex.netlayer'
+    exclude group: 'com.github.haveno-dex.tor-binary'
     exclude group: 'io.grpc'
     exclude group: 'org.fxmisc.easybind'
 }
 
 dependencies {
-    // We need three subprojects from includeBuild('bisq'), with some of their transitive dependencies.
-    implementation 'bisq:assets'
-    implementation 'bisq:common'
-    implementation 'bisq:core'
+    // We need three subprojects from includeBuild('haveno'), with some of their transitive dependencies.
+    implementation 'haveno:assets'
+    implementation 'haveno:common'
+    implementation 'haveno:core'
 
     implementation libs.bundles.knowm.xchange.libs
 
@@ -67,8 +67,8 @@ dependencies {
 }
 
 clean.doFirst {
-    // Remove the project root level 'bisq-*' scripts and 'lib' dir generated at the end of the assemble task.
-    delete fileTree(dir: projectDir, include: ['bisq-pricenode', 'bisq-pricenode.bat']), 'lib'
+    // Remove the project root level 'haveno-*' scripts and 'lib' dir generated at the end of the assemble task.
+    delete fileTree(dir: projectDir, include: ['haveno-pricenode', 'haveno-pricenode.bat']), 'lib'
 }
 
 test {

@@ -3,13 +3,13 @@
 # Must be run from project directory.
 
 VERSION=$(tr -d '\n' < ./src/main/resources/version.txt)
-echo "bisq-pricenode version = $VERSION"
-JAR="./build/libs/bisq-pricenode-$VERSION.jar"
-echo "bisq-pricenode jar = $JAR"
+echo "haveno-pricenode version = $VERSION"
+JAR="./build/libs/haveno-pricenode-$VERSION.jar"
+echo "haveno-pricenode jar = $JAR"
 
 while true
 do
-echo `date`  "(Re)-starting bisq-pricenode"
+echo `date`  "(Re)-starting haveno-pricenode"
 java -jar $JAR 2 2
 echo `date` "Node terminated unexpectedly!!"
 sleep 3

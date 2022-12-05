@@ -2,7 +2,7 @@ pluginManagement {
     repositories {
         gradlePluginPortal()
     }
-    includeBuild('bisq-gradle')
+    includeBuild('haveno-gradle')
 }
-rootProject.name = 'bisq-pricenode'
-includeBuild('bisq')
+rootProject.name = 'haveno-pricenode'
+includeBuild('haveno')
