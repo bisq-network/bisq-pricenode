@@ -17,12 +17,18 @@
 
 package bisq.price.spot;
 
+import bisq.common.util.Tuple2;
+
+import bisq.core.util.InlierUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * High-level {@link ExchangeRate} data operations.
@@ -31,6 +37,7 @@ import java.util.*;
 class ExchangeRateService {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
+    private final Environment env;
     private final List<ExchangeRateProvider> providers;
 
     /**
@@ -40,7 +47,8 @@ class ExchangeRateService {
      * @param providers all {@link ExchangeRateProvider} implementations in ascending
      *                  order of precedence
      */
-    public ExchangeRateService(List<ExchangeRateProvider> providers) {
+    public ExchangeRateService(Environment env, List<ExchangeRateProvider> providers) {
+        this.env = env;
         this.providers = providers;
     }
 
@@ -103,20 +111,51 @@ class ExchangeRateService {
             } else {
                 // If multiple providers have rates for this currency, then
                 // aggregate = average of the rates
-                OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
+                List<Double> goodPriceList = removeOutliers(exchangeRateList.stream().
+                        mapToDouble(ExchangeRate::getPrice).boxed().collect(Collectors.toList()), currencyCode);
+                OptionalDouble opt = goodPriceList.stream().mapToDouble(Double::doubleValue).average();
                 // List size > 1, so opt is always set
                 double priceAvg = opt.orElseThrow(IllegalStateException::new);
-
                 aggregateExchangeRate = new ExchangeRate(
                         currencyCode,
                         BigDecimal.valueOf(priceAvg),
                         new Date(), // timestamp = time when avg is calculated
                         "Bisq-Aggregate");
+                // log the outlier prices which were removed from the average, if any.
+                for (ExchangeRate badRate : exchangeRateList.stream()
+                        .filter(e -> !goodPriceList.contains(e.getPrice()))
+                        .collect(Collectors.toList())) {
+                    log.warn("outlier price removed={}, source={}, ccy={}, consensus price={}",
+                            badRate.getPrice(),
+                            badRate.getProvider(),
+                            currencyCode,
+                            aggregateExchangeRate.getPrice());
+                }
             }
             aggregateExchangeRates.put(aggregateExchangeRate.getCurrency(), aggregateExchangeRate);
         });
 
         return aggregateExchangeRates;
+    }
+
+    private List<Double> removeOutliers(List<Double> yValues, String contextInfo) {
+        Tuple2<Double, Double> tuple = InlierUtil.findInlierRange(yValues, 0, getOutlierStdDeviation());
+        double lowerBound = tuple.first;
+        double upperBound = tuple.second;
+        List<Double> filteredPrices = yValues.stream()
+                .filter(e -> e >= lowerBound)
+                .filter(e -> e <= upperBound)
+                .collect(Collectors.toList());
+        if (filteredPrices.size() < 1) {
+            log.error("{}: no results after outliers removed. lowerBound={}, upperBound={}, stdDev={}, yValues={}",
+                    contextInfo, lowerBound, upperBound, getOutlierStdDeviation(), yValues.toString());
+            return yValues;   // all prices cannot be removed, so revert to keep service running
+        }
+        return filteredPrices;
+    }
+
+    private double getOutlierStdDeviation() {
+        return Double.parseDouble(env.getProperty("bisq.price.outlierStdDeviation", "2.2"));
     }
 
     /**
