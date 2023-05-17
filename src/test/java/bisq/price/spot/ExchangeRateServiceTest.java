@@ -67,7 +67,7 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withNoExchangeRates_logs_Exception() {
         int numberOfCurrencyPairsOnExchange = 0;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -93,7 +93,7 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withSingleExchangeRate() {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -108,7 +108,7 @@ public class ExchangeRateServiceTest {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
         ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -133,7 +133,7 @@ public class ExchangeRateServiceTest {
         ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes);
         ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes);
 
-        ExchangeRateService service = new ExchangeRateService(asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
