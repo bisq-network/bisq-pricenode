@@ -49,11 +49,6 @@ class CryptoYa extends ExchangeRateProvider {
         super(env, "CRYPTOYA", "cryptoya", Duration.ofMinutes(1));
     }
 
-    @Override
-    public boolean alreadyConsidersBlueMarkets() {
-        return true;
-    }
-
     /**
      *
      * @return average price buy/sell price averaging different providers suported by cryptoya api
