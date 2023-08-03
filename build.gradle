@@ -42,6 +42,8 @@ configurations.all {
 }
 
 dependencies {
+    implementation enforcedPlatform(project(':platform'))
+
     // We need three subprojects from includeBuild('bisq'), with some of their transitive dependencies.
     implementation 'bisq:assets'
     implementation 'bisq:common'
