@@ -5,4 +5,6 @@ pluginManagement {
     includeBuild('bisq-gradle')
 }
 rootProject.name = 'bisq-pricenode'
+
 includeBuild('bisq')
+include 'platform'
