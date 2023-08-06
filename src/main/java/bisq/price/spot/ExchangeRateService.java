@@ -21,6 +21,8 @@ import bisq.common.util.Tuple2;
 
 import bisq.core.util.InlierUtil;
 
+import bisq.price.util.bluelytics.BlueLyticsService;
+import com.google.common.collect.Sets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -36,7 +38,6 @@ import java.util.stream.Collectors;
 @Service
 class ExchangeRateService {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
-
     private final Environment env;
     private final List<ExchangeRateProvider> providers;
 
@@ -64,6 +65,7 @@ class ExchangeRateService {
             metadata.putAll(getMetadata(p));
         });
 
+
         LinkedHashMap<String, Object> result = new LinkedHashMap<>(metadata);
         // Use a sorted list by currency code to make comparison of json data between
         // different price nodes easier
@@ -72,6 +74,56 @@ class ExchangeRateService {
         result.put("data", values);
 
         return result;
+    }
+
+    /**
+     * Please do not call provider.get(), use this method instead to consider currencies with blue markets
+     * @param provider to get the rates from
+     * @return the exchange rates for the different currencies the provider supports considering bluemarket rates if any
+     */
+    public Set<ExchangeRate> providerCurrentExchangeRates(ExchangeRateProvider provider) {
+        Map<String, Double> blueMarketGapForCurrency = this.getBlueMarketGapForCurrencies();
+        Set<ExchangeRate> originalExchangeRates = provider.get();
+        if (originalExchangeRates == null)
+            return null;
+
+        Set<ExchangeRate> exchangeRates = new HashSet<>();
+        boolean noOverlapBetweenCurrencies = Sets.intersection(originalExchangeRates.stream().map(ExchangeRate::getCurrency)
+                        .collect(Collectors.toSet()), blueMarketGapForCurrency.keySet())
+                        .isEmpty();
+
+        if (provider.alreadyConsidersBlueMarkets() || noOverlapBetweenCurrencies) {
+            exchangeRates.addAll(originalExchangeRates);
+        } else {
+            this.addRatesUpdatingBlueGaps(blueMarketGapForCurrency, provider, exchangeRates, originalExchangeRates);
+        }
+        return exchangeRates;
+    }
+
+    private void addRatesUpdatingBlueGaps(Map<String, Double> blueMarketGapForCurrency, ExchangeRateProvider provider, Set<ExchangeRate> exchangeRates, Set<ExchangeRate> originalExchangeRates) {
+        originalExchangeRates.forEach(er -> {
+            // default to original rate
+            ExchangeRate exchangeRateToUse = er;
+            if (blueMarketGapForCurrency.containsKey(er.getCurrency())) {
+                ExchangeRate updatedExchangeRate = provider.maybeUpdateBlueMarketPriceGapForRate(er, blueMarketGapForCurrency.get(er.getCurrency()));
+                if (updatedExchangeRate != null) {
+                    exchangeRateToUse = updatedExchangeRate;
+//                    this.log.info(String.format("Replaced original %s rate of $%s to $%s", er.getCurrency(), BigDecimal.valueOf(er.getPrice()).toEngineeringString(), BigDecimal.valueOf(updatedExchangeRate.getPrice()).toEngineeringString()));
+                }
+            }
+            exchangeRates.add(exchangeRateToUse);
+        });
+    }
+
+    private Map<String, Double> getBlueMarketGapForCurrencies() {
+        Map<String, Double> blueMarketGapForCurrencies = new HashMap<>();
+        // ARS
+        Double arsBlueMultiplier = BlueLyticsService.getInstance().blueGapMultiplier();
+        if (!arsBlueMultiplier.isNaN()) {
+//            this.log.info("Updated ARS/USD multiplier is " + arsBlueMultiplier);
+            blueMarketGapForCurrencies.put("ARS", arsBlueMultiplier);
+        }
+        return blueMarketGapForCurrencies;
     }
 
     /**
@@ -160,9 +212,10 @@ class ExchangeRateService {
     private Map<String, List<ExchangeRate>> getCurrencyCodeToExchangeRates() {
         Map<String, List<ExchangeRate>> currencyCodeToExchangeRates = new HashMap<>();
         for (ExchangeRateProvider p : providers) {
-            if (p.get() == null)
+            Set<ExchangeRate> exchangeRates = providerCurrentExchangeRates(p);
+            if (exchangeRates == null)
                 continue;
-            for (ExchangeRate exchangeRate : p.get()) {
+            for (ExchangeRate exchangeRate : exchangeRates) {
                 String currencyCode = exchangeRate.getCurrency();
                 if (currencyCodeToExchangeRates.containsKey(currencyCode)) {
                     List<ExchangeRate> l = new ArrayList<>(currencyCodeToExchangeRates.get(currencyCode));

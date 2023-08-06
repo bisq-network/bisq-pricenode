@@ -50,6 +50,16 @@ class CryptoYa extends ExchangeRateProvider {
     }
 
     @Override
+    public boolean alreadyConsidersBlueMarkets() {
+        return true;
+    }
+
+    /**
+     *
+     * @return average price buy/sell price averaging different providers suported by cryptoya api
+     * which uses the free market (or blue, or unofficial) ARS price for BTC
+     */
+    @Override
     public Set<ExchangeRate> doGet() {
         CryptoYaMarketData cryptoYaMarketData = fetchArsBlueMarketData();
         OptionalDouble arsBlueRate = cryptoYaMarketData.averagedArsBlueRateFromLast24Hours();

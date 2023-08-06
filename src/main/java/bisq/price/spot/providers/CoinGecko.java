@@ -17,10 +17,14 @@
 
 package bisq.price.spot.providers;
 
+import bisq.asset.Coin;
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 import bisq.price.util.coingecko.CoinGeckoMarketData;
 
+import bisq.price.util.coingecko.CoinGeckoTicker;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.RequestEntity;
@@ -33,16 +37,13 @@ import java.time.Duration;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Component
 class CoinGecko extends ExchangeRateProvider {
-
+    private static final String GET_EXCHANGE_RATES_URL = "https://api.coingecko.com/api/v3/exchange_rates";
     private final RestTemplate restTemplate = new RestTemplate();
 
     public CoinGecko(Environment env) {
@@ -60,18 +61,16 @@ class CoinGecko extends ExchangeRateProvider {
         Predicate<Map.Entry> isDesiredFiatPair = t -> getSupportedFiatCurrencies().contains(t.getKey());
         Predicate<Map.Entry> isDesiredCryptoPair = t -> getSupportedCryptoCurrencies().contains(t.getKey());
 
-        getMarketData().getRates().entrySet().stream()
+        Map<String, CoinGeckoTicker> rates = getMarketData().getRates();
+        rates.entrySet().stream()
                 .filter(isDesiredFiatPair.or(isDesiredCryptoPair))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
                 .forEach((key, ticker) -> {
 
-                    boolean useInverseRate = false;
-                    if (getSupportedCryptoCurrencies().contains(key)) {
-                        // Use inverse rate for alts, because the API returns the
-                        // conversion rate in the opposite direction than what we need
-                        // API returns the BTC/Alt rate, we need the Alt/BTC rate
-                        useInverseRate = true;
-                    }
+                    boolean useInverseRate = getSupportedCryptoCurrencies().contains(key);
+                    // Use inverse rate for alts, because the API returns the
+                    // conversion rate in the opposite direction than what we need
+                    // API returns the BTC/Alt rate, we need the Alt/BTC rate
 
                     BigDecimal rate = ticker.getValue();
                     // Find the inverse rate, while using enough decimals to reflect very
@@ -87,7 +86,6 @@ class CoinGecko extends ExchangeRateProvider {
                             this.getName()
                     ));
                 });
-
         return result;
     }
 
@@ -95,7 +93,7 @@ class CoinGecko extends ExchangeRateProvider {
         return restTemplate.exchange(
                 RequestEntity
                         .get(UriComponentsBuilder
-                                .fromUriString("https://api.coingecko.com/api/v3/exchange_rates").build()
+                                .fromUriString(CoinGecko.GET_EXCHANGE_RATES_URL).build()
                                 .toUri())
                         .build(),
                 new ParameterizedTypeReference<CoinGeckoMarketData>() {

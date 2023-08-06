@@ -15,18 +15,35 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.price.spot.providers;
 
-import bisq.price.AbstractExchangeRateProviderTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.env.StandardEnvironment;
+package bisq.price.util.bluelytics;
 
-@Slf4j
-public class CoinGeckoTest extends AbstractExchangeRateProviderTest {
+import lombok.Getter;
+import lombok.Setter;
 
-    @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new CoinGecko(new StandardEnvironment()));
+import java.util.Date;
+
+@Getter
+@Setter
+public class BlueLyticsDto {
+    @Getter
+    @Setter
+    public static class USDRate {
+        Double value_avg;
+        Double value_sell;
+        Double value_buy;
+    }
+
+    BlueLyticsDto.USDRate oficial;
+    BlueLyticsDto.USDRate blue;
+    Date last_update;
+
+    /**
+     *
+     * @return the sell multiplier to go from oficial to blue market for ARS/USD
+     *  if its not available, returns NaN
+     */
+    public Double gapSellMultiplier() {
+        return this.blue.value_sell / this.oficial.value_sell;
     }
 }

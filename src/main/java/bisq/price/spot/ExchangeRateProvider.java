@@ -32,7 +32,9 @@ import org.knowm.xchange.service.marketdata.params.CurrencyPairsParam;
 import org.knowm.xchange.service.marketdata.params.Params;
 import org.springframework.core.env.Environment;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
@@ -331,5 +333,32 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
      */
     protected boolean requiresFilterDuringBulkTickerRetrieval() {
         return false;
+    }
+
+    /**
+     *
+     * @return true if the implementation of this ExchangeRateProvider already consider currencies
+     * blue markets if any. Defaults to false.
+     */
+    public boolean alreadyConsidersBlueMarkets() {
+        return false;
+    }
+
+    /**
+     * @param originalRate original official rate for a certain currency. E.g. rate for ARS for Argentina PESO
+     * @return a new exchange rate if the implementation of this price provider already tackles real vs official
+     * market prices for the given currency.
+     * e.g. for FIAT ARS official rates are not the ones using in the free trading world.
+     * Most currencies won't need this, so defaults to null.
+     */
+    public @Nullable ExchangeRate maybeUpdateBlueMarketPriceGapForRate(ExchangeRate originalRate, Double blueMarketGapForCurrency) {
+        if ("ARS".equalsIgnoreCase(originalRate.getCurrency())) {
+            double blueRate = originalRate.getPrice() * blueMarketGapForCurrency;
+            return new ExchangeRate(originalRate.getCurrency(),
+                    BigDecimal.valueOf(blueRate),
+                    new Date(originalRate.getTimestamp()),
+                    originalRate.getProvider());
+        }
+        return null;
     }
 }

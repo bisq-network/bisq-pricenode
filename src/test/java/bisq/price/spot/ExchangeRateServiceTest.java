@@ -18,6 +18,7 @@
 package bisq.price.spot;
 
 import bisq.core.locale.CurrencyUtil;
+import bisq.price.util.bluelytics.BlueLyticsService;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -31,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,12 +56,16 @@ public class ExchangeRateServiceTest {
     static void setup() {
         // Get the logger object for logs in ExchangeRateService
         exchangeRateServiceLogger = (Logger) LoggerFactory.getLogger(ExchangeRateService.class);
+        exchangeRateServiceLogger.info("Setup started");
+        // trigger the first init
+        BlueLyticsService.getInstance().blueGapMultiplier();
 
         // Initiate and append a ListAppender, which allows us to programmatically inspect
         // log messages
         ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
         listAppender.setName(LIST_APPENDER_NAME);
         listAppender.start();
+        exchangeRateServiceLogger.info("Setup finished");
         exchangeRateServiceLogger.addAppender(listAppender);
     }
 
@@ -71,7 +77,7 @@ public class ExchangeRateServiceTest {
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // No exchange rates provided by this exchange, two things should happen
         // A) the timestamp should be set to 0
@@ -97,7 +103,7 @@ public class ExchangeRateServiceTest {
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // One rate was provided by this provider, so the timestamp should not be 0
         assertNotEquals(0L, retrievedData.get(dummyProvider.getPrefix() + "Ts"));
@@ -112,12 +118,33 @@ public class ExchangeRateServiceTest {
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(dummyProvider1, dummyProvider2));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
 
         // One rate was provided by each provider in this service, so the timestamp
         // (for both providers) should not be 0
         assertNotEquals(0L, retrievedData.get(dummyProvider1.getPrefix() + "Ts"));
         assertNotEquals(0L, retrievedData.get(dummyProvider2.getPrefix() + "Ts"));
+    }
+
+    /**
+     * Test scenario
+     */
+    @Test
+    public void getAllMarketPrices_oneProvider_considerBlueUpdates() {
+        String excludedCcvString = "LBP";
+        Set<String> rateCurrencyCodes = Sets.newHashSet("ARS", "USD", "LBP", "EUR");
+        String providerExcludedCcvString = "HUOBI:BRL,BINANCE:GBP,BINANCE:SEK";
+        Environment mockedEnvironment = mock(Environment.class);
+        when(mockedEnvironment.getProperty(eq("bisq.price.cryptocurrency.excluded"), anyString())).thenReturn("");
+        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcvString);
+        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcvString);
+        ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(rateCurrencyCodes, mockedEnvironment);
+        ExchangeRateService service = new ExchangeRateService(mockedEnvironment, List.of(dummyProvider));
+
+        Map<String, Object> retrievedData = service.getAllMarketPrices();
+
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, List.of(dummyProvider));
+
     }
 
     /**
@@ -130,14 +157,14 @@ public class ExchangeRateServiceTest {
         Set<String> rateCurrencyCodes = Sets.newHashSet("CURRENCY-1", "CURRENCY-2", "CURRENCY-3");
 
         // Create several dummy providers, each providing their own rates for the same set of currencies
-        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes);
-        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes);
+        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
+        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
 
         ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(dummyProvider1, dummyProvider2));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
 
         // At least one rate was provided by each provider in this service, so the
         // timestamp (for both providers) should not be 0
@@ -216,17 +243,18 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
+     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData                   Response data retrieved from the {@link ExchangeRateService}
      * @param provider                        {@link ExchangeRateProvider} available to the
      *                                        {@link ExchangeRateService}
      * @param numberOfCurrencyPairsOnExchange Number of currency pairs this exchange was
      *                                        initiated with
      */
-    private void doSanityChecksForRetrievedDataSingleProvider(Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataSingleProvider(ExchangeRateService service, Map<String, Object> retrievedData,
                                                               ExchangeRateProvider provider,
                                                               int numberOfCurrencyPairsOnExchange) {
         // Check response structure
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(provider));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(provider));
 
         // Check that the amount of provided exchange rates matches expected value
         // For one provider, the amount of rates of that provider should be the total
@@ -238,11 +266,12 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
+     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData Response data retrieved from the {@link ExchangeRateService}
      * @param providers     List of all {@link ExchangeRateProvider#getPrefix()} the
      *                      {@link ExchangeRateService} uses
      */
-    private void doSanityChecksForRetrievedDataMultipleProviders(Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataMultipleProviders(ExchangeRateService service, Map<String, Object> retrievedData,
                                                                  List<ExchangeRateProvider> providers) {
         // Check the correct amount of entries were present in the service response:
         // The timestamp and the count fields are per provider, so N providers means N
@@ -279,7 +308,7 @@ public class ExchangeRateServiceTest {
         // Collect all ExchangeRates from all providers and group them by currency code
         Map<String, List<ExchangeRate>> currencyCodeToExchangeRatesFromProviders = new HashMap<>();
         for (ExchangeRateProvider p : providers) {
-            for (ExchangeRate exchangeRate : p.get()) {
+            for (ExchangeRate exchangeRate : service.providerCurrentExchangeRates(p)) {
                 String currencyCode = exchangeRate.getCurrency();
                 if (currencyCodeToExchangeRatesFromProviders.containsKey(currencyCode)) {
                     List<ExchangeRate> l = new ArrayList<>(currencyCodeToExchangeRatesFromProviders.get(currencyCode));
@@ -355,9 +384,9 @@ public class ExchangeRateServiceTest {
         return dummyProvider;
     }
 
-    private ExchangeRateProvider buildDummyExchangeRateProvider(Set<String> rateCurrencyCodes) {
+    private ExchangeRateProvider buildDummyExchangeRateProvider(Set<String> rateCurrencyCodes, @Nullable Environment env) {
         ExchangeRateProvider dummyProvider = new ExchangeRateProvider(
-                new StandardEnvironment(),
+                env == null ? new StandardEnvironment() : env,
                 "ExchangeName-" + getRandomAlphaNumericString(5),
                 "EXCH-" + getRandomAlphaNumericString(3),
                 Duration.ofDays(1)) {
