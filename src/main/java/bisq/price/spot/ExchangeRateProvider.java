@@ -128,7 +128,6 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
     @Override
     protected void onRefresh() {
         get().stream()
-                .filter(e -> "USD".equals(e.getCurrency()) || "LTC".equals(e.getCurrency()))
                 .forEach(e -> log.info("BTC/{}: {}", e.getCurrency(), e.getPrice()));
     }
 
@@ -139,8 +138,19 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
      * specified {@link Exchange}
      * @see CurrencyUtil#getAllSortedFiatCurrencies()
      * @see CurrencyUtil#getAllSortedCryptoCurrencies()
+     * It must not pass exceptions up, instead return an empty set if there is a problem with the feed.
+     * (otherwise PriceProvider would keep supplying stale rates).
      */
     protected Set<ExchangeRate> doGet(Class<? extends Exchange> exchangeClass) {
+        try {
+            return doGetInternal(exchangeClass);
+        } catch (Exception e) {
+            log.warn(e.toString());
+        }
+        return new HashSet<>();
+    }
+
+    private Set<ExchangeRate> doGetInternal(Class<? extends Exchange> exchangeClass) {
         Set<ExchangeRate> result = new HashSet<>();
 
         // Initialize XChange objects
