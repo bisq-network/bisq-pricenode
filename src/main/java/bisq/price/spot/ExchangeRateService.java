@@ -57,15 +57,11 @@ class ExchangeRateService {
         Map<String, ExchangeRate> aggregateExchangeRates = getAggregateExchangeRates();
 
         providers.forEach(p -> {
-            if (p.get() == null)
-                return;
-            Set<ExchangeRate> exchangeRates = p.get();
-
             // Specific metadata fields for specific providers are expected by the client,
             // mostly for historical reasons
             // Therefore, add metadata fields for all known providers
             // Rates are encapsulated in the "data" map below
-            metadata.putAll(getMetadata(p, exchangeRates));
+            metadata.putAll(getMetadata(p));
         });
 
         LinkedHashMap<String, Object> result = new LinkedHashMap<>(metadata);
@@ -180,7 +176,7 @@ class ExchangeRateService {
         return currencyCodeToExchangeRates;
     }
 
-    private Map<String, Object> getMetadata(ExchangeRateProvider provider, Set<ExchangeRate> exchangeRates) {
+    private Map<String, Object> getMetadata(ExchangeRateProvider provider) {
         Map<String, Object> metadata = new LinkedHashMap<>();
 
         // In case a provider is not available we still want to deliver the data of the
@@ -188,8 +184,11 @@ class ExchangeRateService {
         // Bisq app will check if the timestamp is in a tolerance window and if it is too
         // old it will show that the price is not available.
         long timestamp = 0;
+        Set<ExchangeRate> exchangeRates = provider.get();
         try {
-            timestamp = getTimestamp(provider, exchangeRates);
+            if (exchangeRates != null) {
+                timestamp = getTimestamp(provider, exchangeRates);
+            }
         } catch (Throwable t) {
             log.error(t.toString());
             if (log.isDebugEnabled())
@@ -198,7 +197,7 @@ class ExchangeRateService {
 
         String prefix = provider.getPrefix();
         metadata.put(prefix + "Ts", timestamp);
-        metadata.put(prefix + "Count", exchangeRates.size());
+        metadata.put(prefix + "Count", exchangeRates == null ? 0 : exchangeRates.size());
 
         return metadata;
     }
