@@ -20,26 +20,67 @@ package bisq.price.spot.providers;
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 
-import org.knowm.xchange.poloniex.PoloniexExchange;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.env.Environment;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 
-import java.util.Set;
+import java.util.*;
 
 @Component
 class Poloniex extends ExchangeRateProvider {
-
+    // Supported fiat: -
+    // Supported alts: DASH, DCR, DOGE, ETC, ETH, LTC, XMR, ZEC
+    private static final String CURRENCIES = "DASH,DCR,DOGE,ETC,ETH,LTC,XMR,ZEC";
+    private static final String POLONIEX_URL = "https://api.poloniex.com/markets/price";
     public Poloniex(Environment env) {
         super(env, "POLO", "poloniex", Duration.ofMinutes(1));
     }
 
     @Override
     public Set<ExchangeRate> doGet() {
-        // Supported fiat: -
-        // Supported alts: DASH, DCR, DOGE, ETC, ETH, LTC, XMR, ZEC
-        return doGet(PoloniexExchange.class);
+        Set<String> requestedCurrencies = new HashSet<>(Arrays.asList(CURRENCIES.split(",")));
+        Set<ExchangeRate> exchangeRates = new HashSet<>();
+        ResponseEntity<PoloniexTicker[]> response =
+                new RestTemplate().getForEntity(
+                        UriComponentsBuilder
+                                .fromUriString(POLONIEX_URL).build()
+                                .toUri(),
+                        PoloniexTicker[].class);
+        PoloniexTicker[] tickers = response.getBody();
+        Arrays.stream(Objects.requireNonNull(tickers))
+                .filter(ticker -> ticker.isMatch(requestedCurrencies))
+                .forEach(ticker -> exchangeRates.add(
+                        new ExchangeRate(ticker.getCurrency(), ticker.getPrice(), new Date(), this.getName())));
+        return exchangeRates;
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class PoloniexTicker {
+        public String symbol;
+        public String price;
+
+        public BigDecimal getPrice() {
+            return new BigDecimal(price);
+        }
+
+        public String getCurrency() {
+            // symbol might not be a BTC pair, in which case return empty string
+            int splitIndex = symbol.indexOf("_BTC");
+            if (splitIndex < 0) {
+                return "";
+            }
+            return symbol.substring(0, splitIndex);
+        }
+
+        public boolean isMatch(Set<String> requestedCurrencies) {
+            return symbol.equalsIgnoreCase(getCurrency() + "_BTC") &&
+                    requestedCurrencies.contains(getCurrency());
+        }
     }
 }
