@@ -33,6 +33,8 @@ import org.knowm.xchange.service.marketdata.params.Params;
 import org.springframework.core.env.Environment;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
@@ -169,7 +171,9 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         // Find the desired fiat pairs (pair format is BTC-FIAT)
         List<CurrencyPair> desiredFiatPairs = allCurrencyPairsOnExchange.stream()
                 .filter(cp -> cp.base.equals(Currency.BTC))
-                .filter(cp -> getSupportedFiatCurrencies().contains(cp.counter.getCurrencyCode()))
+                .filter(cp -> getSupportedFiatCurrencies().contains(cp.counter.getCurrencyCode()) ||
+                        // include also stablecoins, which are quoted fiat-like.. see below isInverted()
+                        getSupportedCryptoCurrencies().contains(cp.counter.getCurrencyCode()))
                 .collect(Collectors.toList());
 
         // Find the desired altcoin pairs (pair format is ALT-BTC)
@@ -277,6 +281,8 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         // Create an ExchangeRate for each desired currency pair ticker that was retrieved
         Predicate<Ticker> isDesiredFiatPair = t -> desiredFiatPairs.contains(t.getCurrencyPair());
         Predicate<Ticker> isDesiredCryptoPair = t -> desiredCryptoPairs.contains(t.getCurrencyPair());
+        Predicate<Ticker> isInverted =  t -> desiredFiatPairs.contains(t.getCurrencyPair()) &&
+                getSupportedCryptoCurrencies().contains(t.getCurrencyPair().counter.getCurrencyCode());
         tickersRetrievedFromExchange.stream()
                 .filter(isDesiredFiatPair.or(isDesiredCryptoPair)) // Only consider desired pairs
                 .forEach(t -> {
@@ -296,9 +302,18 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                         otherExchangeRateCurrency = t.getCurrencyPair().base.getCurrencyCode();
                     }
 
+                    BigDecimal last = t.getLast();
+                    if (isInverted.test(t)) {
+                        // Bisq price format currently expects all altcoins with BTC as the denominator
+                        // most stable coins are quoted as fiat (DAI being an exception on SOME exchanges),
+                        // they need have price inverted for Bisq client to handle them properly.
+                        last = BigDecimal.valueOf(1.0).divide(last, 8, RoundingMode.HALF_UP);
+                        log.info("{} isInverted, price translated from {} to {} for Bisq client.",
+                                otherExchangeRateCurrency, t.getLast(), last);
+                    }
                     result.add(new ExchangeRate(
                             otherExchangeRateCurrency,
-                            t.getLast(),
+                            last,
                             // Some exchanges do not provide timestamps
                             t.getTimestamp() == null ? new Date() : t.getTimestamp(),
                             this.getName()
