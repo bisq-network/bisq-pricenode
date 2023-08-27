@@ -173,7 +173,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                 .filter(cp -> cp.base.equals(Currency.BTC))
                 .filter(cp -> getSupportedFiatCurrencies().contains(cp.counter.getCurrencyCode()) ||
                         // include also stablecoins, which are quoted fiat-like.. see below isInverted()
-                        getSupportedCryptoCurrencies().contains(cp.counter.getCurrencyCode()))
+                        getSupportedCryptoCurrencies().contains(translateToBisqCurrency(cp.counter.getCurrencyCode())))
                 .collect(Collectors.toList());
 
         // Find the desired altcoin pairs (pair format is ALT-BTC)
@@ -282,7 +282,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         Predicate<Ticker> isDesiredFiatPair = t -> desiredFiatPairs.contains(t.getCurrencyPair());
         Predicate<Ticker> isDesiredCryptoPair = t -> desiredCryptoPairs.contains(t.getCurrencyPair());
         Predicate<Ticker> isInverted =  t -> desiredFiatPairs.contains(t.getCurrencyPair()) &&
-                getSupportedCryptoCurrencies().contains(t.getCurrencyPair().counter.getCurrencyCode());
+                getSupportedCryptoCurrencies().contains(translateToBisqCurrency(t.getCurrencyPair().counter.getCurrencyCode()));
         tickersRetrievedFromExchange.stream()
                 .filter(isDesiredFiatPair.or(isDesiredCryptoPair)) // Only consider desired pairs
                 .forEach(t -> {
@@ -311,8 +311,9 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                         log.info("{} isInverted, price translated from {} to {} for Bisq client.",
                                 otherExchangeRateCurrency, t.getLast(), last);
                     }
+
                     result.add(new ExchangeRate(
-                            otherExchangeRateCurrency,
+                            translateToBisqCurrency(otherExchangeRateCurrency),
                             last,
                             // Some exchanges do not provide timestamps
                             t.getTimestamp() == null ? new Date() : t.getTimestamp(),
@@ -346,5 +347,10 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
      */
     protected boolean requiresFilterDuringBulkTickerRetrieval() {
         return false;
+    }
+
+    private String translateToBisqCurrency(String exchangeCurrency) {
+        // until Bisq client code is changed we map between USDT & USDT-E
+        return exchangeCurrency.equalsIgnoreCase("USDT") ? "USDT-E" : exchangeCurrency;
     }
 }
