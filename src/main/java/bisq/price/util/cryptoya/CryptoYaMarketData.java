@@ -57,14 +57,12 @@ public class CryptoYaMarketData {
                 .minus(1, ChronoUnit.DAYS)
                 .getEpochSecond();
 
-        return streamLatestAvailableMarkets(yesterdayTimestamp).mapToDouble(CryptoYaTicker::getAsk)
+        return allTickersAsStream()
+                .filter(Objects::nonNull)
+                .filter(rate -> rate.getTime() > yesterdayTimestamp)
+                .mapToDouble(CryptoYaTicker::getAsk)
+                .filter(ask -> ask > 0)
                 .average();
-    }
-
-    private Stream<CryptoYaTicker> streamLatestAvailableMarkets(Long startingTime) {
-        return allTickersAsStream().filter(Objects::nonNull)
-                .filter(r -> r.getAsk() > 0)
-                .filter(rate -> rate.getTime() > startingTime);
     }
 
     private Stream<CryptoYaTicker> allTickersAsStream() {
