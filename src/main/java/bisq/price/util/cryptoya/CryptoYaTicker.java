@@ -32,6 +32,6 @@ public class CryptoYaTicker {
 
     private Double totalBid;
 
-    private Integer time;
+    private long time;
 
 }
