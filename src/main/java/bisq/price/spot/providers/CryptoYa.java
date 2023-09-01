@@ -20,12 +20,9 @@ package bisq.price.spot.providers;
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 import bisq.price.util.cryptoya.CryptoYaMarketData;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
-import org.springframework.http.RequestEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -52,7 +49,6 @@ class CryptoYa extends ExchangeRateProvider {
     }
 
     /**
-     *
      * @return average price buy/sell price averaging different providers suported by cryptoya api
      * which uses the free market (or blue, or unofficial) ARS price for BTC
      */
@@ -73,14 +69,6 @@ class CryptoYa extends ExchangeRateProvider {
     }
 
     private CryptoYaMarketData getARSBlueMarketData() {
-        return restTemplate.exchange(
-                RequestEntity
-                        .get(UriComponentsBuilder
-                                .fromUriString(CryptoYa.ARS_BTC_URL).build()
-                                .toUri())
-                        .build(),
-                new ParameterizedTypeReference<CryptoYaMarketData>() {
-                }
-        ).getBody();
+        return restTemplate.getForObject(ARS_BTC_URL, CryptoYaMarketData.class);
     }
 }
