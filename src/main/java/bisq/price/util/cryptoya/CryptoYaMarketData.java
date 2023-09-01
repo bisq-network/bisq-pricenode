@@ -24,6 +24,7 @@ import lombok.Setter;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
+import java.util.OptionalDouble;
 import java.util.stream.Stream;
 
 @Getter
@@ -51,25 +52,22 @@ public class CryptoYaMarketData {
     private CryptoYaTicker bybit;
     private CryptoYaTicker binance;
 
-    /**
-     *
-     * @return the avg ask price from all the exchanges that have updated ask prices (not older than 1 day)
-     *      if no market data available returns 0
-     */
-    public Double averagedArsBlueRateFromLast24Hours() {
-        // filter more than 1 day old values with yesterday UTC timestamp
-        Long yesterdayTimestamp = Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
+    public OptionalDouble averagedArsBlueRateFromLast24Hours() {
+        Long yesterdayTimestamp = Instant.now()
+                .minus(1, ChronoUnit.DAYS)
+                .getEpochSecond();
+
         return streamLatestAvailableMarkets(yesterdayTimestamp).mapToDouble(CryptoYaTicker::getAsk)
-                .average()
-                .orElse(0.0d);
+                .average();
     }
 
     private Stream<CryptoYaTicker> streamLatestAvailableMarkets(Long startingTime) {
         return Stream.of(argenbtc, buenbit, ripio, ripioexchange, satoshitango,
-                cryptomkt, decrypto, latamex, bitso, letsbit, fiwind,
-                lemoncash, bitmonedero, belo, tiendacrypto, saldo,
-                kriptonmarket, calypso, bybit, binance)
-                    .filter(Objects::nonNull)
-                    .filter(rate -> rate.getTime() > startingTime);
+                        cryptomkt, decrypto, latamex, bitso, letsbit, fiwind,
+                        lemoncash, bitmonedero, belo, tiendacrypto, saldo,
+                        kriptonmarket, calypso, bybit, binance)
+                .filter(Objects::nonNull)
+                .filter(r -> r.getAsk() > 0)
+                .filter(rate -> rate.getTime() > startingTime);
     }
 }

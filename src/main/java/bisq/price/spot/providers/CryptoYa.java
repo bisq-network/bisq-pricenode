@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.OptionalDouble;
 import java.util.Set;
 
 /**
@@ -56,11 +57,12 @@ class CryptoYa extends ExchangeRateProvider {
     public Set<ExchangeRate> doGet() {
         Set<ExchangeRate> result = new HashSet<>();
         String key = "ARS";
-        Double rate = fetchArsBlueMarketData().averagedArsBlueRateFromLast24Hours();
-        if (rate > 0.0d) {
+
+        OptionalDouble rate = fetchArsBlueMarketData().averagedArsBlueRateFromLast24Hours();
+        if (rate.isPresent()) {
             result.add(new ExchangeRate(
                     key,
-                    BigDecimal.valueOf(rate),
+                    BigDecimal.valueOf(rate.getAsDouble()),
                     new Date(),
                     this.getName()
             ));
