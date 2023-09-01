@@ -53,7 +53,7 @@ public class CryptoYaMarketData {
     private CryptoYaTicker binance;
 
     public OptionalDouble averagedArsBlueRateFromLast24Hours() {
-        Long yesterdayTimestamp = Instant.now()
+        long yesterdayTimestamp = Instant.now()
                 .minus(1, ChronoUnit.DAYS)
                 .getEpochSecond();
 
