@@ -56,7 +56,7 @@ public class CryptoYaMarketData {
      * @return the avg ask price from all the exchanges that have updated ask prices (not older than 1 day)
      *      if no market data available returns 0
      */
-    public Double averageBlueRate() {
+    public Double averagedArsBlueRateFromLast24Hours() {
         // filter more than 1 day old values with yesterday UTC timestamp
         Long yesterdayTimestamp = Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
         return streamLatestAvailableMarkets(yesterdayTimestamp).mapToDouble(CryptoYaTicker::getAsk)

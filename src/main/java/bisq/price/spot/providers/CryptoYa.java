@@ -56,7 +56,7 @@ class CryptoYa extends ExchangeRateProvider {
     public Set<ExchangeRate> doGet() {
         Set<ExchangeRate> result = new HashSet<>();
         String key = "ARS";
-        Double rate = fetchArsBlueMarketData().averageBlueRate();
+        Double rate = fetchArsBlueMarketData().averagedArsBlueRateFromLast24Hours();
         if (rate > 0.0d) {
             result.add(new ExchangeRate(
                     key,
