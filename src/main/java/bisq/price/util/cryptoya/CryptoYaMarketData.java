@@ -62,12 +62,33 @@ public class CryptoYaMarketData {
     }
 
     private Stream<CryptoYaTicker> streamLatestAvailableMarkets(Long startingTime) {
-        return Stream.of(argenbtc, buenbit, ripio, ripioexchange, satoshitango,
-                        cryptomkt, decrypto, latamex, bitso, letsbit, fiwind,
-                        lemoncash, bitmonedero, belo, tiendacrypto, saldo,
-                        kriptonmarket, calypso, bybit, binance)
-                .filter(Objects::nonNull)
+        return allTickersAsStream().filter(Objects::nonNull)
                 .filter(r -> r.getAsk() > 0)
                 .filter(rate -> rate.getTime() > startingTime);
+    }
+
+    private Stream<CryptoYaTicker> allTickersAsStream() {
+        return Stream.of(
+                argenbtc,
+                buenbit,
+                ripio,
+                ripioexchange,
+                satoshitango,
+                cryptomkt,
+                decrypto,
+                latamex,
+                bitso,
+                letsbit,
+                fiwind,
+                lemoncash,
+                bitmonedero,
+                belo,
+                tiendacrypto,
+                saldo,
+                kriptonmarket,
+                calypso,
+                bybit,
+                binance
+        );
     }
 }
