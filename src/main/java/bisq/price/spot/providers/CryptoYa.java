@@ -40,7 +40,7 @@ import java.util.Set;
 @Component
 class CryptoYa extends ExchangeRateProvider {
 
-    private static final String ARS_BTC_URL = "https://criptoya.com/api/btc/ars/0.1";
+    private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
     private final RestTemplate restTemplate = new RestTemplate();
 
@@ -69,6 +69,6 @@ class CryptoYa extends ExchangeRateProvider {
     }
 
     private CryptoYaMarketData getARSBlueMarketData() {
-        return restTemplate.getForObject(ARS_BTC_URL, CryptoYaMarketData.class);
+        return restTemplate.getForObject(CRYPTO_YA_BTC_ARS_API_URL, CryptoYaMarketData.class);
     }
 }
