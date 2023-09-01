@@ -24,10 +24,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import java.math.BigDecimal;
 import java.time.Duration;
-import java.util.Date;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.OptionalDouble;
 import java.util.Set;
 
@@ -49,25 +47,21 @@ class CryptoYa extends ExchangeRateProvider {
         super(env, "CRYPTOYA", "cryptoya", Duration.ofMinutes(1));
     }
 
-    /**
-     * @return average price buy/sell price averaging different providers suported by cryptoya api
-     * which uses the free market (or blue, or unofficial) ARS price for BTC
-     */
     @Override
     public Set<ExchangeRate> doGet() {
-        Set<ExchangeRate> result = new HashSet<>();
-        String key = "ARS";
+        CryptoYaMarketData cryptoYaMarketData = fetchArsBlueMarketData();
+        OptionalDouble arsBlueRate = cryptoYaMarketData.averagedArsBlueRateFromLast24Hours();
 
-        OptionalDouble rate = fetchArsBlueMarketData().averagedArsBlueRateFromLast24Hours();
-        if (rate.isPresent()) {
-            result.add(new ExchangeRate(
-                    key,
-                    BigDecimal.valueOf(rate.getAsDouble()),
-                    new Date(),
-                    this.getName()
-            ));
+        if (arsBlueRate.isPresent()) {
+            ExchangeRate exchangeRate = new ExchangeRate(
+                    "ARS",
+                    arsBlueRate.getAsDouble(),
+                    System.currentTimeMillis(),
+                    this.getName());
+            return Set.of(exchangeRate);
         }
-        return result;
+
+        return Collections.emptySet();
     }
 
     private CryptoYaMarketData fetchArsBlueMarketData() {
