@@ -21,10 +21,12 @@ import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 import bisq.price.util.cryptoya.CryptoYaMarketData;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.OptionalDouble;
 import java.util.Set;
@@ -41,7 +43,7 @@ class CryptoYa extends ExchangeRateProvider {
 
     private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final WebClient webClient = WebClient.create();
 
     public CryptoYa(Environment env) {
         super(env, "CRYPTOYA", "cryptoya", Duration.ofMinutes(1));
@@ -65,6 +67,11 @@ class CryptoYa extends ExchangeRateProvider {
     }
 
     private CryptoYaMarketData fetchArsBlueMarketData() {
-        return restTemplate.getForObject(CRYPTO_YA_BTC_ARS_API_URL, CryptoYaMarketData.class);
+        return webClient.get()
+                .uri(CRYPTO_YA_BTC_ARS_API_URL)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(CryptoYaMarketData.class)
+                .block(Duration.of(30, ChronoUnit.SECONDS));
     }
 }
