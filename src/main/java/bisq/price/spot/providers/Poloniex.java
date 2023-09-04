@@ -22,14 +22,14 @@ import bisq.price.spot.ExchangeRateProvider;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.env.Environment;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.math.BigDecimal;
 import java.time.Duration;
 
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 @Component
@@ -46,13 +46,13 @@ class Poloniex extends ExchangeRateProvider {
     public Set<ExchangeRate> doGet() {
         Set<String> requestedCurrencies = new HashSet<>(Arrays.asList(CURRENCIES.split(",")));
         Set<ExchangeRate> exchangeRates = new HashSet<>();
-        ResponseEntity<PoloniexTicker[]> response =
-                new RestTemplate().getForEntity(
-                        UriComponentsBuilder
-                                .fromUriString(POLONIEX_URL).build()
-                                .toUri(),
-                        PoloniexTicker[].class);
-        PoloniexTicker[] tickers = response.getBody();
+        PoloniexTicker[] tickers =
+                WebClient.create().get()
+                    .uri(POLONIEX_URL)
+                    .accept(MediaType.APPLICATION_JSON)
+                    .retrieve()
+                    .bodyToMono(PoloniexTicker[].class)
+                .block(Duration.of(30, ChronoUnit.SECONDS));
         Arrays.stream(Objects.requireNonNull(tickers))
                 .filter(ticker -> ticker.isMatch(requestedCurrencies))
                 .forEach(ticker -> exchangeRates.add(
