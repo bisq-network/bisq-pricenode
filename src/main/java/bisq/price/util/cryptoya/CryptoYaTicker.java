@@ -24,14 +24,14 @@ import lombok.Setter;
 @Setter
 public class CryptoYaTicker {
 
-    private Double ask;
+    private double ask;
 
-    private Double totalAsk;
+    private double totalAsk;
 
-    private Double bid;
+    private double bid;
 
-    private Double totalBid;
+    private double totalBid;
 
-    private Integer time;
+    private long time;
 
 }
