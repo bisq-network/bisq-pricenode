@@ -15,32 +15,10 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
+package bisq.price.spot.providers;
 
-package bisq.price.util.bluelytics;
-
-import lombok.Getter;
-import lombok.Setter;
-
-import java.util.Date;
-import java.util.OptionalDouble;
-
-@Getter
-@Setter
-public class BlueLyticsDto {
-    @Getter
-    @Setter
-    public static class USDRate {
-        double value_avg;
-        double value_sell;
-        double value_buy;
-    }
-
-    private BlueLyticsDto.USDRate oficial;
-    private BlueLyticsDto.USDRate blue;
-    private Date last_update;
-
-    public OptionalDouble gapSellMultiplier() {
-        double sellMultiplier = blue.value_sell / oficial.value_sell;
-        return Double.isNaN(sellMultiplier) ? OptionalDouble.empty() : OptionalDouble.of(sellMultiplier);
-    }
+/**
+ * Tag for providers that provide a "blue" market exchange rate (unofficial real/free traded)
+ */
+public interface BlueRateProvider {
 }

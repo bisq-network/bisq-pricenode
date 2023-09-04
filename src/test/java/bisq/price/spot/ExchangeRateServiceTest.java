@@ -18,7 +18,6 @@
 package bisq.price.spot;
 
 import bisq.core.locale.CurrencyUtil;
-import bisq.price.util.bluelytics.BlueLyticsService;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -57,8 +56,6 @@ public class ExchangeRateServiceTest {
         // Get the logger object for logs in ExchangeRateService
         exchangeRateServiceLogger = (Logger) LoggerFactory.getLogger(ExchangeRateService.class);
         exchangeRateServiceLogger.info("Setup started");
-        // trigger the first init
-        BlueLyticsService.getInstance().blueGapMultiplier();
 
         // Initiate and append a ListAppender, which allows us to programmatically inspect
         // log messages
@@ -73,7 +70,8 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withNoExchangeRates_logs_Exception() {
         int numberOfCurrencyPairsOnExchange = 0;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                Collections.singletonList(dummyProvider), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -99,7 +97,8 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withSingleExchangeRate() {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                Collections.singletonList(dummyProvider), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -114,7 +113,8 @@ public class ExchangeRateServiceTest {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
         ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -139,7 +139,7 @@ public class ExchangeRateServiceTest {
         when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcvString);
         when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcvString);
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(rateCurrencyCodes, mockedEnvironment);
-        ExchangeRateService service = new ExchangeRateService(mockedEnvironment, List.of(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(mockedEnvironment, List.of(dummyProvider), List.of());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -160,7 +160,8 @@ public class ExchangeRateServiceTest {
         ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
         ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
 
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
@@ -308,7 +309,7 @@ public class ExchangeRateServiceTest {
         // Collect all ExchangeRates from all providers and group them by currency code
         Map<String, List<ExchangeRate>> currencyCodeToExchangeRatesFromProviders = new HashMap<>();
         for (ExchangeRateProvider p : providers) {
-            for (ExchangeRate exchangeRate : service.providerCurrentExchangeRates(p)) {
+            for (ExchangeRate exchangeRate : p.get()) {
                 String currencyCode = exchangeRate.getCurrency();
                 if (currencyCodeToExchangeRatesFromProviders.containsKey(currencyCode)) {
                     List<ExchangeRate> l = new ArrayList<>(currencyCodeToExchangeRatesFromProviders.get(currencyCode));
@@ -324,17 +325,19 @@ public class ExchangeRateServiceTest {
         // value is an average
         currencyCodeToExchangeRatesFromProviders.forEach((currencyCode, exchangeRateList) -> {
             ExchangeRate rateFromService = currencyCodeToExchangeRateFromService.get(currencyCode);
-            double priceFromService = rateFromService.getPrice();
+            if (rateFromService != null) {
+                double priceFromService = rateFromService.getPrice();
 
-            OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
-            double priceAvgFromProviders = opt.getAsDouble();
+                OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
+                double priceAvgFromProviders = opt.getAsDouble();
 
-            // Ensure that the ExchangeRateService correctly aggregates exchange rates
-            // from multiple providers. If multiple providers contain rates for a
-            // currency, the service should return a single aggregate rate
-            // Expected value for aggregate rate = avg(provider rates)
-            // This formula works for any number of providers for a specific currency
-            assertEquals(priceFromService, priceAvgFromProviders, "Service returned incorrect aggregate rate");
+                // Ensure that the ExchangeRateService correctly aggregates exchange rates
+                // from multiple providers. If multiple providers contain rates for a
+                // currency, the service should return a single aggregate rate
+                // Expected value for aggregate rate = avg(provider rates)
+                // This formula works for any number of providers for a specific currency
+                assertEquals(priceFromService, priceAvgFromProviders, "Service returned incorrect aggregate rate");
+            }
         });
     }
 

@@ -15,32 +15,17 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
+package bisq.price.spot;
 
-package bisq.price.util.bluelytics;
+import java.util.Optional;
 
-import lombok.Getter;
-import lombok.Setter;
+/**
+ * An ExchangeRateTransformer allows to apply a transformation on a particular ExchangeRate
+ * for particular supported currencies. This is useful for countries with currency  controls
+ * that have a "blue" market in place for real/free trades.
+ */
+public interface ExchangeRateTransformer {
+    Optional<ExchangeRate> apply(ExchangeRateProvider provider, ExchangeRate exchangeRate);
 
-import java.util.Date;
-import java.util.OptionalDouble;
-
-@Getter
-@Setter
-public class BlueLyticsDto {
-    @Getter
-    @Setter
-    public static class USDRate {
-        double value_avg;
-        double value_sell;
-        double value_buy;
-    }
-
-    private BlueLyticsDto.USDRate oficial;
-    private BlueLyticsDto.USDRate blue;
-    private Date last_update;
-
-    public OptionalDouble gapSellMultiplier() {
-        double sellMultiplier = blue.value_sell / oficial.value_sell;
-        return Double.isNaN(sellMultiplier) ? OptionalDouble.empty() : OptionalDouble.of(sellMultiplier);
-    }
+    String supportedCurrency();
 }
