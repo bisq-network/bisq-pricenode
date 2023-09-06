@@ -38,9 +38,9 @@ class Poloniex extends ExchangeRateProvider {
     private static final List<String> SUPPORTED_CURRENCIES =
             List.of("DASH", "DCR", "DOGE", "ETC", "ETH", "LTC", "XMR", "ZEC");
     private static final String POLONIEX_URL = "https://api.poloniex.com/markets/price";
-
+    private static final String PROVIDER_NAME = "POLO";
     public Poloniex(Environment env) {
-        super(env, "POLO", "poloniex", Duration.ofMinutes(1));
+        super(env, PROVIDER_NAME, "poloniex", Duration.ofMinutes(1));
     }
 
     @Override
@@ -64,7 +64,7 @@ class Poloniex extends ExchangeRateProvider {
         public String price;
 
         public ExchangeRate toExchangeRate() {
-            return new ExchangeRate(getCurrency(), getPrice(), new Date(), "Poloniex");
+            return new ExchangeRate(getCurrency(), getPrice(), new Date(), PROVIDER_NAME);
         }
 
         public BigDecimal getPrice() {
