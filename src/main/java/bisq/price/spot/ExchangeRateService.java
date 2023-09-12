@@ -18,9 +18,7 @@
 package bisq.price.spot;
 
 import bisq.common.util.Tuple2;
-
 import bisq.core.util.InlierUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
@@ -36,20 +34,24 @@ import java.util.stream.Collectors;
 @Service
 class ExchangeRateService {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
-
     private final Environment env;
     private final List<ExchangeRateProvider> providers;
+    private final List<ExchangeRateTransformer> transformers;
 
     /**
      * Construct an {@link ExchangeRateService} with a list of all
      * {@link ExchangeRateProvider} implementations discovered via classpath scanning.
      *
-     * @param providers all {@link ExchangeRateProvider} implementations in ascending
-     *                  order of precedence
+     * @param providers    all {@link ExchangeRateProvider} implementations in ascending
+     *                     order of precedence
+     * @param transformers all {@link ExchangeRateTransformer} implementations
      */
-    public ExchangeRateService(Environment env, List<ExchangeRateProvider> providers) {
+    public ExchangeRateService(Environment env,
+                               List<ExchangeRateProvider> providers,
+                               List<ExchangeRateTransformer> transformers) {
         this.env = env;
         this.providers = providers;
+        this.transformers = transformers;
     }
 
     public Map<String, Object> getAllMarketPrices() {
@@ -63,6 +65,7 @@ class ExchangeRateService {
             // Rates are encapsulated in the "data" map below
             metadata.putAll(getMetadata(p));
         });
+
 
         LinkedHashMap<String, Object> result = new LinkedHashMap<>(metadata);
         // Use a sorted list by currency code to make comparison of json data between
@@ -160,19 +163,43 @@ class ExchangeRateService {
     private Map<String, List<ExchangeRate>> getCurrencyCodeToExchangeRates() {
         Map<String, List<ExchangeRate>> currencyCodeToExchangeRates = new HashMap<>();
         for (ExchangeRateProvider p : providers) {
-            if (p.get() == null)
+            Set<ExchangeRate> exchangeRates = p.get();
+            if (exchangeRates == null)
                 continue;
-            for (ExchangeRate exchangeRate : p.get()) {
+            for (ExchangeRate exchangeRate : exchangeRates) {
                 String currencyCode = exchangeRate.getCurrency();
+
+                List<ExchangeRate> transformedExchangeRates = transformers.stream()
+                        .filter(transformer -> transformer.supportedCurrency()
+                                .equalsIgnoreCase(currencyCode)
+                        )
+                        .map(t -> t.apply(p, exchangeRate))
+                        .filter(Optional::isPresent)
+                        .map(Optional::get)
+                        .collect(Collectors.toList());
+
+                if (!transformedExchangeRates.isEmpty()) {
+                    log.info(String.format("%s transformed from %s to %s", currencyCode, exchangeRate.getPrice(), transformedExchangeRates.get(0).getPrice()));
+                }
+
                 if (currencyCodeToExchangeRates.containsKey(currencyCode)) {
                     List<ExchangeRate> l = new ArrayList<>(currencyCodeToExchangeRates.get(currencyCode));
-                    l.add(exchangeRate);
+                    if (transformedExchangeRates.isEmpty()) {
+                        l.add(exchangeRate);
+                    } else {
+                        l.addAll(transformedExchangeRates);
+                    }
                     currencyCodeToExchangeRates.put(currencyCode, l);
                 } else {
-                    currencyCodeToExchangeRates.put(currencyCode, List.of(exchangeRate));
+                    if (transformedExchangeRates.isEmpty()) {
+                        currencyCodeToExchangeRates.put(currencyCode, List.of(exchangeRate));
+                    } else {
+                        currencyCodeToExchangeRates.put(currencyCode, transformedExchangeRates);
+                    }
                 }
             }
         }
+
         return currencyCodeToExchangeRates;
     }
 

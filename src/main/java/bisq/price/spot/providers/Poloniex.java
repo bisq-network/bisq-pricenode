@@ -19,27 +19,69 @@ package bisq.price.spot.providers;
 
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
-
-import org.knowm.xchange.poloniex.PoloniexExchange;
-
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.core.env.Environment;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Flux;
 
+import java.math.BigDecimal;
 import java.time.Duration;
-
+import java.util.Date;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 class Poloniex extends ExchangeRateProvider {
-
+    private static final List<String> SUPPORTED_CURRENCIES =
+            List.of("DASH", "DCR", "DOGE", "ETC", "ETH", "LTC", "XMR", "ZEC");
+    private static final String POLONIEX_URL = "https://api.poloniex.com/markets/price";
+    private static final String PROVIDER_NAME = "POLO";
     public Poloniex(Environment env) {
-        super(env, "POLO", "poloniex", Duration.ofMinutes(1));
+        super(env, PROVIDER_NAME, "poloniex", Duration.ofMinutes(1));
     }
 
     @Override
     public Set<ExchangeRate> doGet() {
-        // Supported fiat: -
-        // Supported alts: DASH, DCR, DOGE, ETC, ETH, LTC, XMR, ZEC
-        return doGet(PoloniexExchange.class);
+        Flux<PoloniexTicker> poloniexTickerFlux = WebClient.create()
+                .get()
+                .uri(POLONIEX_URL)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToFlux(PoloniexTicker.class);
+
+        return poloniexTickerFlux.filter(PoloniexTicker::isSupportedCurrency)
+                .map(PoloniexTicker::toExchangeRate)
+                .collect(Collectors.toSet())
+                .block();
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class PoloniexTicker {
+        public String symbol;
+        public String price;
+
+        public ExchangeRate toExchangeRate() {
+            return new ExchangeRate(getCurrency(), getPrice(), new Date(), PROVIDER_NAME);
+        }
+
+        public BigDecimal getPrice() {
+            return new BigDecimal(price);
+        }
+
+        public String getCurrency() {
+            // DASH_BTC, DOGE_BTC, LTC_BTC, ...
+            return symbol.split("_")[0];
+        }
+
+        private boolean isBtcPair() {
+            return symbol.endsWith("_BTC");
+        }
+
+        public boolean isSupportedCurrency() {
+            return isBtcPair() && SUPPORTED_CURRENCIES.contains(getCurrency());
+        }
     }
 }

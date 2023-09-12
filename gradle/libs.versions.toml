@@ -20,26 +20,17 @@ spring-boot-starter-web-lib = { strictly = '2.5.6' }
 [libraries]
 junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-jupiter-lib' }
 knowm-xchange-binance = { module = 'org.knowm.xchange:xchange-binance', version.ref = 'knowm-xchange-lib' }
-knowm-xchange-bitbay = { module = 'org.knowm.xchange:xchange-bitbay', version.ref = 'knowm-xchange-lib' }
 known-xchange-bitfinex = { module = 'org.knowm.xchange:xchange-bitfinex', version.ref = 'knowm-xchange-lib' }
 known-xchange-bitflyer = { module = 'org.knowm.xchange:xchange-bitflyer', version.ref = 'knowm-xchange-lib' }
 known-xchange-bitstamp = { module = 'org.knowm.xchange:xchange-bitstamp', version.ref = 'knowm-xchange-lib' }
 known-xchange-btcmarkets = { module = 'org.knowm.xchange:xchange-btcmarkets', version.ref = 'knowm-xchange-lib' }
-known-xchange-cexio = { module = 'org.knowm.xchange:xchange-cexio', version.ref = 'knowm-xchange-lib' }
 known-xchange-coinbasepro = { module = 'org.knowm.xchange:xchange-coinbasepro', version.ref = 'knowm-xchange-lib' }
-known-xchange-coinmarketcap = { module = 'org.knowm.xchange:xchange-coinmarketcap', version.ref = 'knowm-xchange-lib' }
-known-xchange-coinmate = { module = 'org.knowm.xchange:xchange-coinmate', version.ref = 'knowm-xchange-lib' }
 known-xchange-coinone = { module = 'org.knowm.xchange:xchange-coinone', version.ref = 'knowm-xchange-lib' }
-known-xchange-exmo = { module = 'org.knowm.xchange:xchange-exmo', version.ref = 'knowm-xchange-lib' }
-known-xchange-hitbtc = { module = 'org.knowm.xchange:xchange-hitbtc', version.ref = 'knowm-xchange-lib' }
-known-xchange-huobi = { module = 'org.knowm.xchange:xchange-huobi', version.ref = 'knowm-xchange-lib' }
 known-xchange-independentreserve = { module = 'org.knowm.xchange:xchange-independentreserve', version.ref = 'knowm-xchange-lib' }
 known-xchange-kraken = { module = 'org.knowm.xchange:xchange-kraken', version.ref = 'knowm-xchange-lib' }
 known-xchange-luno = { module = 'org.knowm.xchange:xchange-luno', version.ref = 'knowm-xchange-lib' }
 known-xchange-mercadobitcoin = { module = 'org.knowm.xchange:xchange-mercadobitcoin', version.ref = 'knowm-xchange-lib' }
 known-xchange-paribu = { module = 'org.knowm.xchange:xchange-paribu', version.ref = 'knowm-xchange-lib' }
-known-xchange-poloniex = { module = 'org.knowm.xchange:xchange-poloniex', version.ref = 'knowm-xchange-lib' }
-known-xchange-quoine = { module = 'org.knowm.xchange:xchange-quoine', version.ref = 'knowm-xchange-lib' }
 logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback-lib' }
 logback-classic = { module = 'ch.qos.logback:logback-classic', version.ref = 'logback-lib' }
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
@@ -47,15 +38,15 @@ mockito-core = { module = 'org.mockito:mockito-core', version.ref = 'mockito-lib
 slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j-lib' }
 spring-dependency-management-plugin = { module = 'io.spring.gradle:dependency-management-plugin', version.ref = 'spring-dependency-management-plugin-lib' }
 spring-boot-starter-web = { module = 'org.springframework.boot:spring-boot-starter-web', version.ref = 'spring-boot-starter-web-lib' }
+spring-boot-starter-webflux = { module = 'org.springframework.boot:spring-boot-starter-webflux', version.ref = 'spring-boot-starter-web-lib' }
 
 [bundles]
 knowm-xchange-libs = [
-    'knowm-xchange-binance', 'knowm-xchange-bitbay', 'known-xchange-bitfinex',
-    'known-xchange-bitflyer', 'known-xchange-bitstamp', 'known-xchange-btcmarkets', 'known-xchange-cexio',
-    'known-xchange-coinbasepro', 'known-xchange-coinmarketcap', 'known-xchange-coinmate', 'known-xchange-coinone',
-    'known-xchange-exmo', 'known-xchange-hitbtc', 'known-xchange-huobi', 'known-xchange-independentreserve',
-    'known-xchange-kraken', 'known-xchange-luno', 'known-xchange-mercadobitcoin', 'known-xchange-paribu',
-    'known-xchange-poloniex', 'known-xchange-quoine'
+    'knowm-xchange-binance', 'known-xchange-bitfinex',
+    'known-xchange-bitflyer', 'known-xchange-bitstamp', 'known-xchange-btcmarkets',
+    'known-xchange-coinbasepro', 'known-xchange-coinone',
+    'known-xchange-independentreserve',
+    'known-xchange-kraken', 'known-xchange-luno', 'known-xchange-mercadobitcoin', 'known-xchange-paribu'
 ]
 
 [plugins]

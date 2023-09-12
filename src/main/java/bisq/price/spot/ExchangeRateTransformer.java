@@ -15,18 +15,17 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.price.spot.providers;
+package bisq.price.spot;
 
-import bisq.price.AbstractExchangeRateProviderTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.env.StandardEnvironment;
+import java.util.Optional;
 
-@Slf4j
-public class CoinGeckoTest extends AbstractExchangeRateProviderTest {
+/**
+ * An ExchangeRateTransformer allows to apply a transformation on a particular ExchangeRate
+ * for particular supported currencies. This is useful for countries with currency  controls
+ * that have a "blue" market in place for real/free trades.
+ */
+public interface ExchangeRateTransformer {
+    Optional<ExchangeRate> apply(ExchangeRateProvider provider, ExchangeRate exchangeRate);
 
-    @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new CoinGecko(new StandardEnvironment()));
-    }
+    String supportedCurrency();
 }

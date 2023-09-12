@@ -17,16 +17,8 @@
 
 package bisq.price.spot.providers;
 
-import bisq.price.AbstractExchangeRateProviderTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.env.StandardEnvironment;
-
-@Slf4j
-public class CoinGeckoTest extends AbstractExchangeRateProviderTest {
-
-    @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new CoinGecko(new StandardEnvironment()));
-    }
+/**
+ * Tag for providers that provide a "blue" market exchange rate (unofficial real/free traded)
+ */
+public interface BlueRateProvider {
 }
