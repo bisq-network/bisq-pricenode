@@ -15,18 +15,32 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.price.spot.providers;
 
-import bisq.price.AbstractExchangeRateProviderTest;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.springframework.core.env.StandardEnvironment;
+package bisq.price.util.bluelytics;
 
-@Slf4j
-public class CoinGeckoTest extends AbstractExchangeRateProviderTest {
+import lombok.Getter;
+import lombok.Setter;
 
-    @Test
-    public void doGet_successfulCall() {
-        doGet_successfulCall(new CoinGecko(new StandardEnvironment()));
+import java.util.Date;
+import java.util.OptionalDouble;
+
+@Getter
+@Setter
+public class BlueLyticsDto {
+    @Getter
+    @Setter
+    public static class USDRate {
+        double value_avg;
+        double value_sell;
+        double value_buy;
+    }
+
+    private BlueLyticsDto.USDRate oficial;
+    private BlueLyticsDto.USDRate blue;
+    private Date last_update;
+
+    public OptionalDouble gapSellMultiplier() {
+        double sellMultiplier = blue.value_sell / oficial.value_sell;
+        return Double.isNaN(sellMultiplier) ? OptionalDouble.empty() : OptionalDouble.of(sellMultiplier);
     }
 }

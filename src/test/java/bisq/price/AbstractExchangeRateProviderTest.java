@@ -46,12 +46,12 @@ public abstract class AbstractExchangeRateProviderTest {
                 .collect(Collectors.toSet());
 
         Set<String> supportedFiatCurrenciesRetrieved = exchangeProvider.getSupportedFiatCurrencies().stream()
-                .filter(f -> retrievedRatesCurrencies.contains(f))
+                .filter(retrievedRatesCurrencies::contains)
                 .collect(Collectors.toCollection(TreeSet::new));
         log.info("Retrieved rates for supported fiat currencies: " + supportedFiatCurrenciesRetrieved);
 
         Set<String> supportedCryptoCurrenciesRetrieved = exchangeProvider.getSupportedCryptoCurrencies().stream()
-                .filter(c -> retrievedRatesCurrencies.contains(c))
+                .filter(retrievedRatesCurrencies::contains)
                 .collect(Collectors.toCollection(TreeSet::new));
         log.info("Retrieved rates for supported altcoins: " + supportedCryptoCurrenciesRetrieved);
 
@@ -59,7 +59,7 @@ public abstract class AbstractExchangeRateProviderTest {
                 exchangeProvider.getSupportedCryptoCurrencies(),
                 exchangeProvider.getSupportedFiatCurrencies());
 
-        Set unsupportedCurrencies = Sets.difference(retrievedRatesCurrencies, supportedCurrencies);
+        Set<String> unsupportedCurrencies = Sets.difference(retrievedRatesCurrencies, supportedCurrencies);
         assertTrue(unsupportedCurrencies.isEmpty(),
                 "Retrieved exchange rates contain unsupported currencies: " + unsupportedCurrencies);
     }

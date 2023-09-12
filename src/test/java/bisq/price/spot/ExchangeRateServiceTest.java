@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 
+import javax.annotation.Nullable;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -54,12 +55,14 @@ public class ExchangeRateServiceTest {
     static void setup() {
         // Get the logger object for logs in ExchangeRateService
         exchangeRateServiceLogger = (Logger) LoggerFactory.getLogger(ExchangeRateService.class);
+        exchangeRateServiceLogger.info("Setup started");
 
         // Initiate and append a ListAppender, which allows us to programmatically inspect
         // log messages
         ListAppender<ILoggingEvent> listAppender = new ListAppender<>();
         listAppender.setName(LIST_APPENDER_NAME);
         listAppender.start();
+        exchangeRateServiceLogger.info("Setup finished");
         exchangeRateServiceLogger.addAppender(listAppender);
     }
 
@@ -67,11 +70,12 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withNoExchangeRates_logs_Exception() {
         int numberOfCurrencyPairsOnExchange = 0;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                Collections.singletonList(dummyProvider), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // No exchange rates provided by this exchange, two things should happen
         // A) the timestamp should be set to 0
@@ -93,11 +97,12 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withSingleExchangeRate() {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), Collections.singletonList(dummyProvider));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                Collections.singletonList(dummyProvider), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // One rate was provided by this provider, so the timestamp should not be 0
         assertNotEquals(0L, retrievedData.get(dummyProvider.getPrefix() + "Ts"));
@@ -108,16 +113,38 @@ public class ExchangeRateServiceTest {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
         ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(dummyProvider1, dummyProvider2));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
 
         // One rate was provided by each provider in this service, so the timestamp
         // (for both providers) should not be 0
         assertNotEquals(0L, retrievedData.get(dummyProvider1.getPrefix() + "Ts"));
         assertNotEquals(0L, retrievedData.get(dummyProvider2.getPrefix() + "Ts"));
+    }
+
+    /**
+     * Test scenario
+     */
+    @Test
+    public void getAllMarketPrices_oneProvider_considerBlueUpdates() {
+        String excludedCcvString = "LBP";
+        Set<String> rateCurrencyCodes = Sets.newHashSet("ARS", "USD", "LBP", "EUR");
+        String providerExcludedCcvString = "HUOBI:BRL,BINANCE:GBP,BINANCE:SEK";
+        Environment mockedEnvironment = mock(Environment.class);
+        when(mockedEnvironment.getProperty(eq("bisq.price.cryptocurrency.excluded"), anyString())).thenReturn("");
+        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcvString);
+        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcvString);
+        ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(rateCurrencyCodes, mockedEnvironment);
+        ExchangeRateService service = new ExchangeRateService(mockedEnvironment, List.of(dummyProvider), List.of());
+
+        Map<String, Object> retrievedData = service.getAllMarketPrices();
+
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, List.of(dummyProvider));
+
     }
 
     /**
@@ -130,14 +157,15 @@ public class ExchangeRateServiceTest {
         Set<String> rateCurrencyCodes = Sets.newHashSet("CURRENCY-1", "CURRENCY-2", "CURRENCY-3");
 
         // Create several dummy providers, each providing their own rates for the same set of currencies
-        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes);
-        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes);
+        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
+        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
 
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(), asList(dummyProvider1, dummyProvider2));
+        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
+                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(dummyProvider1, dummyProvider2));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
 
         // At least one rate was provided by each provider in this service, so the
         // timestamp (for both providers) should not be 0
@@ -216,17 +244,18 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
+     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData                   Response data retrieved from the {@link ExchangeRateService}
      * @param provider                        {@link ExchangeRateProvider} available to the
      *                                        {@link ExchangeRateService}
      * @param numberOfCurrencyPairsOnExchange Number of currency pairs this exchange was
      *                                        initiated with
      */
-    private void doSanityChecksForRetrievedDataSingleProvider(Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataSingleProvider(ExchangeRateService service, Map<String, Object> retrievedData,
                                                               ExchangeRateProvider provider,
                                                               int numberOfCurrencyPairsOnExchange) {
         // Check response structure
-        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(provider));
+        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(provider));
 
         // Check that the amount of provided exchange rates matches expected value
         // For one provider, the amount of rates of that provider should be the total
@@ -238,11 +267,12 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
+     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData Response data retrieved from the {@link ExchangeRateService}
      * @param providers     List of all {@link ExchangeRateProvider#getPrefix()} the
      *                      {@link ExchangeRateService} uses
      */
-    private void doSanityChecksForRetrievedDataMultipleProviders(Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataMultipleProviders(ExchangeRateService service, Map<String, Object> retrievedData,
                                                                  List<ExchangeRateProvider> providers) {
         // Check the correct amount of entries were present in the service response:
         // The timestamp and the count fields are per provider, so N providers means N
@@ -295,17 +325,19 @@ public class ExchangeRateServiceTest {
         // value is an average
         currencyCodeToExchangeRatesFromProviders.forEach((currencyCode, exchangeRateList) -> {
             ExchangeRate rateFromService = currencyCodeToExchangeRateFromService.get(currencyCode);
-            double priceFromService = rateFromService.getPrice();
+            if (rateFromService != null) {
+                double priceFromService = rateFromService.getPrice();
 
-            OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
-            double priceAvgFromProviders = opt.getAsDouble();
+                OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
+                double priceAvgFromProviders = opt.getAsDouble();
 
-            // Ensure that the ExchangeRateService correctly aggregates exchange rates
-            // from multiple providers. If multiple providers contain rates for a
-            // currency, the service should return a single aggregate rate
-            // Expected value for aggregate rate = avg(provider rates)
-            // This formula works for any number of providers for a specific currency
-            assertEquals(priceFromService, priceAvgFromProviders, "Service returned incorrect aggregate rate");
+                // Ensure that the ExchangeRateService correctly aggregates exchange rates
+                // from multiple providers. If multiple providers contain rates for a
+                // currency, the service should return a single aggregate rate
+                // Expected value for aggregate rate = avg(provider rates)
+                // This formula works for any number of providers for a specific currency
+                assertEquals(priceFromService, priceAvgFromProviders, "Service returned incorrect aggregate rate");
+            }
         });
     }
 
@@ -355,9 +387,9 @@ public class ExchangeRateServiceTest {
         return dummyProvider;
     }
 
-    private ExchangeRateProvider buildDummyExchangeRateProvider(Set<String> rateCurrencyCodes) {
+    private ExchangeRateProvider buildDummyExchangeRateProvider(Set<String> rateCurrencyCodes, @Nullable Environment env) {
         ExchangeRateProvider dummyProvider = new ExchangeRateProvider(
-                new StandardEnvironment(),
+                env == null ? new StandardEnvironment() : env,
                 "ExchangeName-" + getRandomAlphaNumericString(5),
                 "EXCH-" + getRandomAlphaNumericString(3),
                 Duration.ofDays(1)) {

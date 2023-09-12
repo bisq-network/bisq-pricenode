@@ -39,7 +39,7 @@ import java.util.Set;
  * This ExchangeRateProvider provides a real market rate (black or "blue") for ARS/BTC
  */
 @Component
-class CryptoYa extends ExchangeRateProvider {
+class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
 
     private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
@@ -49,6 +49,11 @@ class CryptoYa extends ExchangeRateProvider {
         super(env, "CRYPTOYA", "cryptoya", Duration.ofMinutes(1));
     }
 
+    /**
+     *
+     * @return average price buy/sell price averaging different providers suported by cryptoya api
+     * which uses the free market (or blue, or unofficial) ARS price for BTC
+     */
     @Override
     public Set<ExchangeRate> doGet() {
         CryptoYaMarketData cryptoYaMarketData = fetchArsBlueMarketData();

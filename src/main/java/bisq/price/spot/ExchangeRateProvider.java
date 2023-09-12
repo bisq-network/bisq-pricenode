@@ -32,7 +32,9 @@ import org.knowm.xchange.service.marketdata.params.CurrencyPairsParam;
 import org.knowm.xchange.service.marketdata.params.Params;
 import org.springframework.core.env.Environment;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Predicate;
