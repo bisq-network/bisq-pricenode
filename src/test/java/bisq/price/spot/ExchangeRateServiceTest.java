@@ -70,12 +70,9 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withNoExchangeRates_logs_Exception() {
         int numberOfCurrencyPairsOnExchange = 0;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
-                Collections.singletonList(dummyProvider), Collections.emptyList());
-
-        Map<String, Object> retrievedData = service.getAllMarketPrices();
-
-        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        Map<String, Object> retrievedData = new ExchangeRateService(
+                new StandardEnvironment(), Collections.singletonList(dummyProvider)).getAllMarketPrices();
+        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // No exchange rates provided by this exchange, two things should happen
         // A) the timestamp should be set to 0
@@ -89,20 +86,19 @@ public class ExchangeRateServiceTest {
         // Log msg has the format: java.lang.IllegalStateException: No exchange rate data
         // found for ExchangeName-JzfP1
         List<ILoggingEvent> logsList = ((ListAppender) exchangeRateServiceLogger.getAppender(LIST_APPENDER_NAME)).list;
-        assertEquals(Level.ERROR, logsList.get(0).getLevel());
-        assertTrue(logsList.get(0).getMessage().endsWith("No exchange rate data found for " + dummyProvider.getName()));
+        logsList.stream().reduce((first, second) -> second).ifPresentOrElse(loggingEvent -> {
+            assertEquals(Level.ERROR, loggingEvent.getLevel());
+            assertTrue(loggingEvent.getMessage().endsWith("No exchange rate data found for " + dummyProvider.getName()));
+        }, () -> fail("Expected exception log message not found"));
     }
 
     @Test
     public void getAllMarketPrices_withSingleExchangeRate() {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
-                Collections.singletonList(dummyProvider), Collections.emptyList());
-
-        Map<String, Object> retrievedData = service.getAllMarketPrices();
-
-        doSanityChecksForRetrievedDataSingleProvider(service, retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
+        Map<String, Object> retrievedData = new ExchangeRateService(
+                new StandardEnvironment(), Collections.singletonList(dummyProvider)).getAllMarketPrices();
+        doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // One rate was provided by this provider, so the timestamp should not be 0
         assertNotEquals(0L, retrievedData.get(dummyProvider.getPrefix() + "Ts"));
@@ -111,19 +107,18 @@ public class ExchangeRateServiceTest {
     @Test
     public void getAllMarketPrices_withMultipleProviders_differentCurrencyCodes() {
         int numberOfCurrencyPairsOnExchange = 1;
-        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
-                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
+        List<ExchangeRateProvider> providers = asList(
+            buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange),
+            buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
 
-        Map<String, Object> retrievedData = service.getAllMarketPrices();
-
-        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
 
         // One rate was provided by each provider in this service, so the timestamp
         // (for both providers) should not be 0
-        assertNotEquals(0L, retrievedData.get(dummyProvider1.getPrefix() + "Ts"));
-        assertNotEquals(0L, retrievedData.get(dummyProvider2.getPrefix() + "Ts"));
+        assertNotEquals(0L, retrievedData.get(providers.get(0).getPrefix() + "Ts"));
+        assertNotEquals(0L, retrievedData.get(providers.get(1).getPrefix() + "Ts"));
     }
 
     /**
@@ -157,20 +152,96 @@ public class ExchangeRateServiceTest {
         Set<String> rateCurrencyCodes = Sets.newHashSet("CURRENCY-1", "CURRENCY-2", "CURRENCY-3");
 
         // Create several dummy providers, each providing their own rates for the same set of currencies
-        ExchangeRateProvider dummyProvider1 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
-        ExchangeRateProvider dummyProvider2 = buildDummyExchangeRateProvider(rateCurrencyCodes, null);
-
-        ExchangeRateService service = new ExchangeRateService(new StandardEnvironment(),
-                asList(dummyProvider1, dummyProvider2), Collections.emptyList());
-
-        Map<String, Object> retrievedData = service.getAllMarketPrices();
-
-        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(dummyProvider1, dummyProvider2));
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProvider(rateCurrencyCodes),
+                buildDummyExchangeRateProvider(rateCurrencyCodes));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
 
         // At least one rate was provided by each provider in this service, so the
         // timestamp (for both providers) should not be 0
-        assertNotEquals(0L, retrievedData.get(dummyProvider1.getPrefix() + "Ts"));
-        assertNotEquals(0L, retrievedData.get(dummyProvider2.getPrefix() + "Ts"));
+        assertNotEquals(0L, retrievedData.get(providers.get(0).getPrefix() + "Ts"));
+        assertNotEquals(0L, retrievedData.get(providers.get(1).getPrefix() + "Ts"));
+    }
+
+    @Test
+    public void bisqIndexCalculation_oneOutlierPriceWideRange() {
+        String fiatCoin = "BRL";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("mercadoBitcoin", fiatCoin, 0.0),  // outlier - low
+                buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 129000.0),
+                buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 131000.0));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, Collections.singletonList("mercadoBitcoin"));
+    }
+
+    @Test
+    public void bisqIndexCalculation_oneOutlierPriceCloseRange() {
+        String fiatCoin = "BRL";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("mercadoBitcoin", fiatCoin, 124545.5),
+                buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 124083.752),
+                buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 124726.0));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, Collections.singletonList("coinGecko"));
+    }
+
+    @Test
+    public void bisqIndexCalculation_twoOutlierPrices() {
+        String fiatCoin = "GBP";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("bitstamp", fiatCoin, 20788.0),
+                buildDummyExchangeRateProviderWithRate("bitfinex", fiatCoin, 19780.0), // outlier - low
+                buildDummyExchangeRateProviderWithRate("kraken", fiatCoin, 20795.0),
+                buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 20774.0),
+                buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 21361.48), // outlier - high
+                buildDummyExchangeRateProviderWithRate("coinbasePro", fiatCoin, 20798.25));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, List.of("binance", "bitfinex"));
+    }
+
+    @Test
+    public void bisqIndexCalculation_altcoinOutlierPrices() {
+        String altcoin = "ETH";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("bitflyer", altcoin, 0.06262),
+                buildDummyExchangeRateProviderWithRate("bitstamp", altcoin, 0.0625939),
+                buildDummyExchangeRateProviderWithRate("kraken", altcoin, 0.06259),
+                buildDummyExchangeRateProviderWithRate("coinGecko", altcoin, 0.06264487),
+                buildDummyExchangeRateProviderWithRate("binance", altcoin, 0.05),   // outlier - low
+                buildDummyExchangeRateProviderWithRate("poloniex", altcoin, 0.07),  // outlier - high
+                buildDummyExchangeRateProviderWithRate("coinbasePro", altcoin, 0.06259));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, List.of("binance", "poloniex"));
+    }
+
+    @Test
+    public void bisqIndexCalculation_allSamePricesAltcoin() {
+        String altcoin = "DOGE";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("bitfinex", altcoin, 2.37E-6),
+                buildDummyExchangeRateProviderWithRate("kraken", altcoin, 2.37E-6),
+                buildDummyExchangeRateProviderWithRate("coinbasePro", altcoin, 2.37E-6));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
+    }
+
+    @Test
+    public void bisqIndexCalculation_allSamePricesFiat() {
+        String fiat = "USD";
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRate("bitfinex", fiat, 10000.0),
+                buildDummyExchangeRateProviderWithRate("kraken", fiat, 10000.0),
+                buildDummyExchangeRateProviderWithRate("coinbasePro", fiat, 10000.0));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
     }
 
     /**
@@ -260,8 +331,33 @@ public class ExchangeRateServiceTest {
         // Check that the amount of provided exchange rates matches expected value
         // For one provider, the amount of rates of that provider should be the total
         // amount of rates in the response
-        List<String> retrievedMarketPricesData = (List<String>) retrievedData.get("data");
-        assertEquals(numberOfCurrencyPairsOnExchange, retrievedMarketPricesData.size());
+        List<ExchangeRate> retrievedRates = (List<ExchangeRate>) retrievedData.get("data");
+        assertEquals(numberOfCurrencyPairsOnExchange, retrievedRates.size());
+    }
+
+
+    private List<ExchangeRate> validateAndGetRetrievedRates(Map<String, Object> retrievedData) {
+        // Check validity of the data field
+        List<ExchangeRate> retrievedRates = (List<ExchangeRate>) retrievedData.get("data");
+        assertNotNull(retrievedRates);
+
+        // It should contain no duplicate ExchangeRate objects
+        int uniqueRates = Sets.newHashSet(retrievedRates).size();
+        int totalRates = retrievedRates.size();
+        assertEquals(uniqueRates, totalRates, "Found duplicate rates in data field");
+
+        // There should be only one ExchangeRate per currency
+        // In other words, even if multiple providers return rates for the same currency,
+        // the ExchangeRateService should expose only one (aggregate) ExchangeRate for
+        // that currency
+        Map<String, ExchangeRate> currencyCodeToExchangeRateFromService = retrievedRates.stream()
+                .collect(Collectors.toMap(
+                        ExchangeRate::getCurrency, exchangeRate -> exchangeRate
+                ));
+        int uniqueCurrencyCodes = currencyCodeToExchangeRateFromService.keySet().size();
+        assertEquals(uniqueCurrencyCodes, uniqueRates, "Found currency code with multiple exchange rates");
+
+        return retrievedRates;
     }
 
     /**
@@ -285,28 +381,27 @@ public class ExchangeRateServiceTest {
             assertNotNull(retrievedData.get(providerPrefix + "Ts"));
             assertNotNull(retrievedData.get(providerPrefix + "Count"));
         }
+    }
 
-        // Check validity of the data field
-        List<ExchangeRate> retrievedRates = (List<ExchangeRate>) retrievedData.get("data");
-        assertNotNull(retrievedRates);
+    private void checkBisqIndexCalculationNoOutliers(List<ExchangeRate> retrievedData,
+                                                      List<ExchangeRateProvider> providers) {
+        checkBisqIndexCalculation(retrievedData, providers, Collections.emptyList());
+    }
 
-        // It should contain no duplicate ExchangeRate objects
-        int uniqueRates = Sets.newHashSet(retrievedRates).size();
-        int totalRates = retrievedRates.size();
-        assertEquals(uniqueRates, totalRates, "Found duplicate rates in data field");
+    private void checkBisqIndexCalculationWithOutlier(List<ExchangeRate> retrievedData,
+                                           List<ExchangeRateProvider> providers,
+                                           List<String> outlierProviderNames) {
+        checkBisqIndexCalculation(retrievedData, providers, outlierProviderNames);
+    }
 
-        // There should be only one ExchangeRate per currency
-        // In other words, even if multiple providers return rates for the same currency,
-        // the ExchangeRateService should expose only one (aggregate) ExchangeRate for
-        // that currency
-        Map<String, ExchangeRate> currencyCodeToExchangeRateFromService = retrievedRates.stream()
+    // checks that the bisq index equals the average of all retrieved quotes
+    private void checkBisqIndexCalculation(List<ExchangeRate> retrievedData,
+                                           List<ExchangeRateProvider> providers,
+                                           List<String> optionalOutlierProviderNames) {
+        Map<String, ExchangeRate> currencyCodeToExchangeRateFromService = retrievedData.stream()
                 .collect(Collectors.toMap(
                         ExchangeRate::getCurrency, exchangeRate -> exchangeRate
                 ));
-        int uniqueCurrencyCodes = currencyCodeToExchangeRateFromService.keySet().size();
-        assertEquals(uniqueCurrencyCodes, uniqueRates, "Found currency code with multiple exchange rates");
-
-        // Collect all ExchangeRates from all providers and group them by currency code
         Map<String, List<ExchangeRate>> currencyCodeToExchangeRatesFromProviders = new HashMap<>();
         for (ExchangeRateProvider p : providers) {
             for (ExchangeRate exchangeRate : p.get()) {
@@ -316,30 +411,27 @@ public class ExchangeRateServiceTest {
                     l.add(exchangeRate);
                     currencyCodeToExchangeRatesFromProviders.put(currencyCode, l);
                 } else {
-                    currencyCodeToExchangeRatesFromProviders.put(currencyCode, asList(exchangeRate));
+                    currencyCodeToExchangeRatesFromProviders.put(currencyCode, Collections.singletonList(exchangeRate));
                 }
             }
         }
-
         // For each ExchangeRate which is covered by multiple providers, ensure the rate
         // value is an average
         currencyCodeToExchangeRatesFromProviders.forEach((currencyCode, exchangeRateList) -> {
-            ExchangeRate rateFromService = currencyCodeToExchangeRateFromService.get(currencyCode);
-            if (rateFromService != null) {
-                double priceFromService = rateFromService.getPrice();
-
-                OptionalDouble opt = exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average();
-                double priceAvgFromProviders = opt.getAsDouble();
-
-                // Ensure that the ExchangeRateService correctly aggregates exchange rates
-                // from multiple providers. If multiple providers contain rates for a
-                // currency, the service should return a single aggregate rate
-                // Expected value for aggregate rate = avg(provider rates)
-                // This formula works for any number of providers for a specific currency
-                assertEquals(priceFromService, priceAvgFromProviders, "Service returned incorrect aggregate rate");
-            }
+            ExchangeRate actualBisqIndex = currencyCodeToExchangeRateFromService.get(currencyCode);
+            OptionalDouble testBisqIndex = exchangeRateList.stream()
+                    .filter(e -> !optionalOutlierProviderNames.contains(e.getProvider()))
+                    .mapToDouble(ExchangeRate::getPrice)
+                    .average();
+            // Ensure that the ExchangeRateService correctly aggregates exchange rates
+            // from multiple providers. If multiple providers contain rates for a
+            // currency, the service should return a single aggregate rate
+            // Expected value for aggregate rate = avg(provider rates)
+            // This formula works for any number of providers for a specific currency
+            assertEquals(testBisqIndex.getAsDouble(), actualBisqIndex.getPrice(), "Service returned incorrect aggregate rate");
         });
     }
+
 
     /**
      * @param numberOfRatesAvailable Number of exchange rates this provider returns
@@ -424,6 +516,40 @@ public class ExchangeRateServiceTest {
         }
         dummyProvider.stop();
 
+        return dummyProvider;
+    }
+
+    private ExchangeRateProvider buildDummyExchangeRateProviderWithRate(String providerName, String currencyCode, Double dummyRate) {
+        ExchangeRateProvider dummyProvider = new ExchangeRateProvider(
+                new StandardEnvironment(),
+                providerName,
+                providerName,
+                Duration.ofDays(1)) {
+
+            @Override
+            public boolean isRunning() {
+                return true;
+            }
+
+            @Override
+            protected Set<ExchangeRate> doGet() {
+                HashSet<ExchangeRate> exchangeRates = new HashSet<>();
+                exchangeRates.add(new ExchangeRate(
+                        currencyCode,
+                        dummyRate,
+                        System.currentTimeMillis(),
+                        getName())); // ExchangeRateProvider name
+                return exchangeRates;
+            }
+        };
+
+        // Initialize provider
+        dummyProvider.start();
+        try {
+            sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        dummyProvider.stop();
         return dummyProvider;
     }
 
