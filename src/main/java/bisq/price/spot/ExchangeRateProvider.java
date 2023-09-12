@@ -245,7 +245,6 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
             List<Ticker> finalTickersRetrievedFromExchange = tickersRetrievedFromExchange;
             Stream.of(desiredFiatPairs, desiredCryptoPairs)
                     .flatMap(Collection::stream)
-                    .collect(Collectors.toList())
                     .forEach(cp -> {
                         try {
 
