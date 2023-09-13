@@ -71,7 +71,7 @@ public class ExchangeRateServiceTest {
         int numberOfCurrencyPairsOnExchange = 0;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
         Map<String, Object> retrievedData = new ExchangeRateService(
-                new StandardEnvironment(), Collections.singletonList(dummyProvider)).getAllMarketPrices();
+                new StandardEnvironment(), Collections.singletonList(dummyProvider), Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // No exchange rates provided by this exchange, two things should happen
@@ -97,7 +97,7 @@ public class ExchangeRateServiceTest {
         int numberOfCurrencyPairsOnExchange = 1;
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange);
         Map<String, Object> retrievedData = new ExchangeRateService(
-                new StandardEnvironment(), Collections.singletonList(dummyProvider)).getAllMarketPrices();
+                new StandardEnvironment(), Collections.singletonList(dummyProvider), Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataSingleProvider(retrievedData, dummyProvider, numberOfCurrencyPairsOnExchange);
 
         // One rate was provided by this provider, so the timestamp should not be 0
@@ -110,7 +110,7 @@ public class ExchangeRateServiceTest {
         List<ExchangeRateProvider> providers = asList(
             buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange),
             buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
 
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
@@ -138,7 +138,7 @@ public class ExchangeRateServiceTest {
 
         Map<String, Object> retrievedData = service.getAllMarketPrices();
 
-        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, List.of(dummyProvider));
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, List.of(dummyProvider));
 
     }
 
@@ -153,9 +153,9 @@ public class ExchangeRateServiceTest {
 
         // Create several dummy providers, each providing their own rates for the same set of currencies
         List<ExchangeRateProvider> providers = asList(
-                buildDummyExchangeRateProvider(rateCurrencyCodes),
-                buildDummyExchangeRateProvider(rateCurrencyCodes));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+                buildDummyExchangeRateProvider(rateCurrencyCodes, null),
+                buildDummyExchangeRateProvider(rateCurrencyCodes, null));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
 
@@ -172,7 +172,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("mercadoBitcoin", fiatCoin, 0.0),  // outlier - low
                 buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 129000.0),
                 buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 131000.0));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, Collections.singletonList("mercadoBitcoin"));
     }
@@ -184,7 +184,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("mercadoBitcoin", fiatCoin, 124545.5),
                 buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 124083.752),
                 buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 124726.0));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, Collections.singletonList("coinGecko"));
     }
@@ -199,7 +199,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("coinGecko", fiatCoin, 20774.0),
                 buildDummyExchangeRateProviderWithRate("binance", fiatCoin, 21361.48), // outlier - high
                 buildDummyExchangeRateProviderWithRate("coinbasePro", fiatCoin, 20798.25));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, List.of("binance", "bitfinex"));
     }
@@ -215,7 +215,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("binance", altcoin, 0.05),   // outlier - low
                 buildDummyExchangeRateProviderWithRate("poloniex", altcoin, 0.07),  // outlier - high
                 buildDummyExchangeRateProviderWithRate("coinbasePro", altcoin, 0.06259));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationWithOutlier(validateAndGetRetrievedRates(retrievedData), providers, List.of("binance", "poloniex"));
     }
@@ -227,7 +227,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("bitfinex", altcoin, 2.37E-6),
                 buildDummyExchangeRateProviderWithRate("kraken", altcoin, 2.37E-6),
                 buildDummyExchangeRateProviderWithRate("coinbasePro", altcoin, 2.37E-6));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
     }
@@ -239,7 +239,7 @@ public class ExchangeRateServiceTest {
                 buildDummyExchangeRateProviderWithRate("bitfinex", fiat, 10000.0),
                 buildDummyExchangeRateProviderWithRate("kraken", fiat, 10000.0),
                 buildDummyExchangeRateProviderWithRate("coinbasePro", fiat, 10000.0));
-        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers).getAllMarketPrices();
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
         checkBisqIndexCalculationNoOutliers(validateAndGetRetrievedRates(retrievedData), providers);
     }
@@ -315,18 +315,17 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
-     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData                   Response data retrieved from the {@link ExchangeRateService}
      * @param provider                        {@link ExchangeRateProvider} available to the
      *                                        {@link ExchangeRateService}
      * @param numberOfCurrencyPairsOnExchange Number of currency pairs this exchange was
      *                                        initiated with
      */
-    private void doSanityChecksForRetrievedDataSingleProvider(ExchangeRateService service, Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataSingleProvider(Map<String, Object> retrievedData,
                                                               ExchangeRateProvider provider,
                                                               int numberOfCurrencyPairsOnExchange) {
         // Check response structure
-        doSanityChecksForRetrievedDataMultipleProviders(service, retrievedData, asList(provider));
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, asList(provider));
 
         // Check that the amount of provided exchange rates matches expected value
         // For one provider, the amount of rates of that provider should be the total
@@ -363,12 +362,11 @@ public class ExchangeRateServiceTest {
     /**
      * Performs generic sanity checks on the response format and contents.
      *
-     * @param service                   being tested {@link ExchangeRateService}
      * @param retrievedData Response data retrieved from the {@link ExchangeRateService}
      * @param providers     List of all {@link ExchangeRateProvider#getPrefix()} the
      *                      {@link ExchangeRateService} uses
      */
-    private void doSanityChecksForRetrievedDataMultipleProviders(ExchangeRateService service, Map<String, Object> retrievedData,
+    private void doSanityChecksForRetrievedDataMultipleProviders(Map<String, Object> retrievedData,
                                                                  List<ExchangeRateProvider> providers) {
         // Check the correct amount of entries were present in the service response:
         // The timestamp and the count fields are per provider, so N providers means N
