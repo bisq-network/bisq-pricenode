@@ -110,26 +110,12 @@ class ExchangeRateService {
             } else {
                 // If multiple providers have rates for this currency, then
                 // aggregate = average of the rates
-                List<Double> goodPriceList = removeOutliers(exchangeRateList.stream().
-                        mapToDouble(ExchangeRate::getPrice).boxed().collect(Collectors.toList()), currencyCode);
-                OptionalDouble opt = goodPriceList.stream().mapToDouble(Double::doubleValue).average();
-                // List size > 1, so opt is always set
-                double priceAvg = opt.orElseThrow(IllegalStateException::new);
+                double priceAvg = priceAverageWithOutliersRemoved(exchangeRateList, currencyCode);
                 aggregateExchangeRate = new ExchangeRate(
                         currencyCode,
                         BigDecimal.valueOf(priceAvg),
                         new Date(), // timestamp = time when avg is calculated
                         "Bisq-Aggregate");
-                // log the outlier prices which were removed from the average, if any.
-                for (ExchangeRate badRate : exchangeRateList.stream()
-                        .filter(e -> !goodPriceList.contains(e.getPrice()))
-                        .collect(Collectors.toList())) {
-                    log.warn("outlier price removed={}, source={}, ccy={}, consensus price={}",
-                            badRate.getPrice(),
-                            badRate.getProvider(),
-                            currencyCode,
-                            aggregateExchangeRate.getPrice());
-                }
             }
             aggregateExchangeRates.put(aggregateExchangeRate.getCurrency(), aggregateExchangeRate);
         });
@@ -137,24 +123,44 @@ class ExchangeRateService {
         return aggregateExchangeRates;
     }
 
-    private List<Double> removeOutliers(List<Double> yValues, String contextInfo) {
+    private double priceAverageWithOutliersRemoved(List<ExchangeRate> exchangeRateList, String contextInfo) {
+        final List<Double> yValues = exchangeRateList.stream().
+                mapToDouble(ExchangeRate::getPrice).boxed().collect(Collectors.toList());
         Tuple2<Double, Double> tuple = InlierUtil.findInlierRange(yValues, 0, getOutlierStdDeviation());
         double lowerBound = tuple.first;
         double upperBound = tuple.second;
-        List<Double> filteredPrices = yValues.stream()
-                .filter(e -> e >= lowerBound)
-                .filter(e -> e <= upperBound)
+        final List<ExchangeRate> filteredPrices = exchangeRateList.stream()
+                .filter(e -> e.getPrice() >= lowerBound)
+                .filter(e -> e.getPrice() <= upperBound)
                 .collect(Collectors.toList());
+
         if (filteredPrices.size() < 1) {
-            log.error("{}: no results after outliers removed. lowerBound={}, upperBound={}, stdDev={}, yValues={}",
-                    contextInfo, lowerBound, upperBound, getOutlierStdDeviation(), yValues.toString());
-            return yValues;   // all prices cannot be removed, so revert to keep service running
+            log.error("{}: could not filter, revert to plain average. lowerBound={}, upperBound={}, stdDev={}, yValues={}",
+                    contextInfo, lowerBound, upperBound, getOutlierStdDeviation(), yValues);
+            return exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average().getAsDouble();
         }
-        return filteredPrices;
+
+        OptionalDouble opt = filteredPrices.stream().mapToDouble(ExchangeRate::getPrice).average();
+        // List size > 1, so opt is always set
+        double priceAvg = opt.orElseThrow(IllegalStateException::new);
+
+        // log the outlier prices which were removed from the average, if any.
+        for (ExchangeRate badRate : exchangeRateList.stream()
+                .filter(e -> !filteredPrices.contains(e))
+                .collect(Collectors.toList())) {
+            log.info("{} {} outlier price removed:{}, lower/upper bounds:{}/{}, consensus price:{}",
+                    badRate.getProvider(),
+                    badRate.getCurrency(),
+                    badRate.getPrice(),
+                    lowerBound,
+                    upperBound,
+                    priceAvg);
+        }
+        return priceAvg;
     }
 
     private double getOutlierStdDeviation() {
-        return Double.parseDouble(env.getProperty("bisq.price.outlierStdDeviation", "2.2"));
+        return Double.parseDouble(env.getProperty("bisq.price.outlierStdDeviation", "1.1"));
     }
 
     /**
