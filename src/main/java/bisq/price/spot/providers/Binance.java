@@ -30,7 +30,7 @@ import java.time.Duration;
 import java.util.Set;
 
 @Component
-class Binance extends ExchangeRateProvider {
+class Binance extends ExchangeRateProvider implements BlueRateProvider {
 
     public Binance(Environment env) {
         super(env, "BINANCE", "binance", Duration.ofMinutes(1));
