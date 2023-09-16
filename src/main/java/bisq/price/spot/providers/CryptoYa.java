@@ -44,6 +44,28 @@ import java.util.stream.Collectors;
 public class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
 
     public static final String PROVIDER_NAME = "CRYPTOYA";
+    public static final Set<String> EXCHANGE_NAME_WHITELIST = Set.of(
+            "argenbtc",
+            "buenbit",
+            "ripio",
+            "ripioexchange",
+            "satoshitango",
+            "cryptomkt",
+            "decrypto",
+            "latamex",
+            "bitso",
+            "letsbit",
+            "fiwind",
+            "lemoncash",
+            "bitmonedero",
+            "belo",
+            "tiendacrypto",
+            "saldo",
+            "kriptonmarket",
+            "calypso",
+            "bybit"
+    );
+
     private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
     private final WebClient webClient = WebClient.create();
