@@ -19,17 +19,19 @@ package bisq.price.spot.providers;
 
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
-import bisq.price.util.cryptoya.CryptoYaMarketData;
+import bisq.price.util.cryptoya.CryptoYaTicker;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.OptionalDouble;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * CryptoYa is used only for Argentina Peso (ARS).
@@ -39,44 +41,52 @@ import java.util.Set;
  * This ExchangeRateProvider provides a real market rate (black or "blue") for ARS/BTC
  */
 @Component
-class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
+public class CryptoYa extends ExchangeRateProvider implements BlueRateProvider {
 
+    public static final String PROVIDER_NAME = "CRYPTOYA";
     private static final String CRYPTO_YA_BTC_ARS_API_URL = "https://criptoya.com/api/btc/ars/0.1";
 
     private final WebClient webClient = WebClient.create();
 
     public CryptoYa(Environment env) {
-        super(env, "CRYPTOYA", "cryptoya", Duration.ofMinutes(1));
+        super(env, PROVIDER_NAME, "cryptoya", Duration.ofMinutes(1));
     }
 
     /**
-     *
      * @return average price buy/sell price averaging different providers suported by cryptoya api
      * which uses the free market (or blue, or unofficial) ARS price for BTC
      */
     @Override
     public Set<ExchangeRate> doGet() {
-        CryptoYaMarketData cryptoYaMarketData = fetchArsBlueMarketData();
-        OptionalDouble arsBlueRate = cryptoYaMarketData.averagedArsBlueRateFromLast24Hours();
+        Map<String, CryptoYaTicker> cryptoYaMarketData = fetchArsBlueMarketData();
 
-        if (arsBlueRate.isPresent()) {
-            ExchangeRate exchangeRate = new ExchangeRate(
-                    "ARS",
-                    arsBlueRate.getAsDouble(),
-                    System.currentTimeMillis(),
-                    this.getName());
-            return Set.of(exchangeRate);
-        }
+        Instant yesterdayInstant = Instant.now()
+                .minus(1, ChronoUnit.DAYS);
 
-        return Collections.emptySet();
+        return cryptoYaMarketData.entrySet()
+                .stream()
+                .map(cryptoYaEntryToExchangeRate(yesterdayInstant))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toUnmodifiableSet());
     }
 
-    private CryptoYaMarketData fetchArsBlueMarketData() {
+    private Map<String, CryptoYaTicker> fetchArsBlueMarketData() {
         return webClient.get()
                 .uri(CRYPTO_YA_BTC_ARS_API_URL)
                 .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .bodyToMono(CryptoYaMarketData.class)
+                .bodyToMono(new ParameterizedTypeReference<Map<String, CryptoYaTicker>>() {
+                })
                 .block(Duration.of(30, ChronoUnit.SECONDS));
+    }
+
+    private Function<Map.Entry<String, CryptoYaTicker>, Optional<ExchangeRate>> cryptoYaEntryToExchangeRate(
+            Instant newerThanInstant) {
+        return entry -> {
+            String exchangeName = entry.getKey();
+            CryptoYaTicker ticker = entry.getValue();
+            return ticker.toExchangeRate(exchangeName, newerThanInstant);
+        };
     }
 }
