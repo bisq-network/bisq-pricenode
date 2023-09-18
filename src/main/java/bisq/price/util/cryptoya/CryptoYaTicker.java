@@ -38,7 +38,7 @@ public class CryptoYaTicker {
     private long time;
 
     public Optional<ExchangeRate> toExchangeRate(String exchangeName, Instant newerThan) {
-        if (isTooOld(newerThan) || isAskZeroOrNegative()) {
+        if (!CryptoYa.EXCHANGE_NAME_WHITELIST.contains(exchangeName) || isTooOld(newerThan) || isAskZeroOrNegative()) {
             return Optional.empty();
         }
 
