@@ -175,7 +175,7 @@ class ExchangeRateService {
             for (ExchangeRate exchangeRate : exchangeRates) {
                 String currencyCode = exchangeRate.getCurrency();
 
-                List<ExchangeRate> transformedExchangeRates = transformers.stream()
+                List<ExchangeRate> finalExchangeRates = transformers.stream()
                         .filter(transformer -> transformer.supportedCurrency()
                                 .equalsIgnoreCase(currencyCode)
                         )
@@ -184,23 +184,19 @@ class ExchangeRateService {
                         .map(Optional::get)
                         .collect(Collectors.toList());
 
-                if (!transformedExchangeRates.isEmpty()) {
-                    log.info(String.format("%s transformed from %s to %s", currencyCode, exchangeRate.getPrice(), transformedExchangeRates.get(0).getPrice()));
-                }
-
                 if (currencyCodeToExchangeRates.containsKey(currencyCode)) {
                     List<ExchangeRate> l = new ArrayList<>(currencyCodeToExchangeRates.get(currencyCode));
-                    if (transformedExchangeRates.isEmpty()) {
+                    if (finalExchangeRates.isEmpty()) {
                         l.add(exchangeRate);
                     } else {
-                        l.addAll(transformedExchangeRates);
+                        l.addAll(finalExchangeRates);
                     }
                     currencyCodeToExchangeRates.put(currencyCode, l);
                 } else {
-                    if (transformedExchangeRates.isEmpty()) {
+                    if (finalExchangeRates.isEmpty()) {
                         currencyCodeToExchangeRates.put(currencyCode, List.of(exchangeRate));
                     } else {
-                        currencyCodeToExchangeRates.put(currencyCode, transformedExchangeRates);
+                        currencyCodeToExchangeRates.put(currencyCode, finalExchangeRates);
                     }
                 }
             }
