@@ -237,7 +237,7 @@ class ExchangeRateService {
 
     private long getTimestamp(ExchangeRateProvider provider, Set<ExchangeRate> exchangeRates) {
         return exchangeRates.stream()
-                .filter(e -> provider.getName().equals(e.getProvider()))
+                .filter(e -> e.getProvider().startsWith(provider.getName()))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No exchange rate data found for " + provider.getName()))
                 .getTimestamp();

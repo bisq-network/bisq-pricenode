@@ -17,21 +17,46 @@
 
 package bisq.price.util.cryptoya;
 
+import bisq.price.spot.ExchangeRate;
+import bisq.price.spot.providers.CryptoYa;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.time.Instant;
+import java.util.Optional;
 
 @Getter
 @Setter
 public class CryptoYaTicker {
 
     private double ask;
-
     private double totalAsk;
 
     private double bid;
-
     private double totalBid;
 
     private long time;
 
+    public Optional<ExchangeRate> toExchangeRate(String exchangeName, Instant newerThan) {
+        if (isTooOld(newerThan) || isAskZeroOrNegative()) {
+            return Optional.empty();
+        }
+
+        return Optional.of(
+                new ExchangeRate(
+                        "ARS",
+                        ask,
+                        System.currentTimeMillis(),
+                        CryptoYa.PROVIDER_NAME + ": " + exchangeName
+                )
+        );
+    }
+
+    private boolean isTooOld(Instant newerThan) {
+        return time <= newerThan.getEpochSecond();
+    }
+
+    private boolean isAskZeroOrNegative() {
+        return ask <= 0;
+    }
 }
