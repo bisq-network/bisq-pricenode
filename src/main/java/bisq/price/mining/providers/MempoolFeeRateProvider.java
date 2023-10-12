@@ -27,19 +27,18 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.CommandLinePropertySource;
 import org.springframework.core.env.Environment;
-import org.springframework.http.RequestEntity;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 import java.time.Instant;
 
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * {@link FeeRateProvider} that interprets the Mempool API format to retrieve a mining
@@ -57,8 +56,6 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
     private static final String MEMPOOL_HOSTNAME_KEY_3 = "bisq.price.mining.providers.mempoolHostname.3";
     private static final String MEMPOOL_HOSTNAME_KEY_4 = "bisq.price.mining.providers.mempoolHostname.4";
     private static final String MEMPOOL_HOSTNAME_KEY_5 = "bisq.price.mining.providers.mempoolHostname.5";
-
-    private static final RestTemplate restTemplate = new RestTemplate();
 
     // TODO: As of the switch to the mempool.space API this field and related members are
     //  now dead code and should be removed, including removing the positional
@@ -89,15 +86,15 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
     }
 
     private FeeRate getEstimatedFeeRate() {
-        Set<Map.Entry<String, Long>> feeRatePredictions = getFeeRatePredictions();
-        long estimatedFeeRate = feeRatePredictions.stream()
+        Map<String, Long> feeRatePredictions = getFeeRatePredictions();
+        long estimatedFeeRate = feeRatePredictions.entrySet().stream()
                 .filter(p -> p.getKey().equalsIgnoreCase("halfHourFee"))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .map(r -> Math.max(r, MIN_FEE_RATE_FOR_TRADING))
                 .map(r -> Math.min(r, MAX_FEE_RATE))
                 .orElse(MIN_FEE_RATE_FOR_TRADING);
-        long economyFee = feeRatePredictions.stream()
+        long economyFee = feeRatePredictions.entrySet().stream()
                 .filter(p -> p.getKey().equalsIgnoreCase("economyFee"))
                 .map(Map.Entry::getValue)
                 .findFirst()
@@ -106,16 +103,13 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
         return new FeeRate("BTC", estimatedFeeRate, economyFee, Instant.now().getEpochSecond());
     }
 
-    private Set<Map.Entry<String, Long>> getFeeRatePredictions() {
-        return restTemplate.exchange(
-            RequestEntity
-                .get(UriComponentsBuilder
-                    // See https://github.com/bisq-network/projects/issues/27
-                    .fromUriString("https://" + getMempoolApiHostname() + "/api/v1/fees/recommended")
-                    .build().toUri())
-                .build(),
-            new ParameterizedTypeReference<Map<String, Long>>() { }
-        ).getBody().entrySet();
+    private Map<String, Long> getFeeRatePredictions() {
+        return WebClient.create().get()
+                .uri("https://" + getMempoolApiHostname() + "/api/v1/fees/recommended")
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Long>>() { })
+                .block(Duration.of(30, ChronoUnit.SECONDS));
     }
 
     /**
