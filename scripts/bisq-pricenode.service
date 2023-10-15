@@ -7,7 +7,8 @@ SyslogIdentifier=bisq-pricenode
 EnvironmentFile=/etc/default/bisq-pricenode.env
 ExecStart=/bisq/bisq-pricenode/bisq-pricenode 2
 ExecStop=/bin/kill -TERM ${MAINPID}
-Restart=on-failure
+RuntimeMaxSec=24hr
+Restart=always
 
 User=bisq
 Group=bisq
