@@ -166,6 +166,28 @@ public class ExchangeRateServiceTest {
     }
 
     @Test
+    public void testStaleRatesRemoved() {
+        String fiatCoin = "BRL";
+        // insert a stale rate
+        long staleTimestamp = 10000L;
+        Long validTimestamp = System.currentTimeMillis();
+        List<ExchangeRateProvider> providers = asList(
+                buildDummyExchangeRateProviderWithRateAndTimestamp("mercadoBitcoin", fiatCoin, 129000.0, staleTimestamp),
+                buildDummyExchangeRateProviderWithRateAndTimestamp("coinGecko", fiatCoin, 129000.0, validTimestamp),
+                buildDummyExchangeRateProviderWithRateAndTimestamp("binance", fiatCoin, 131000.0, validTimestamp));
+        Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
+        doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
+        // check that the provider's stale rate was removed resulting in 0 rates and a 0 timestamp
+        assertEquals("0", retrievedData.get("mercadoBitcoinTs").toString());
+        assertEquals("0", retrievedData.get("mercadoBitcoinCount").toString());
+        // check that other providers are unaffected
+        assertEquals("1", retrievedData.get("coinGeckoCount").toString());
+        assertEquals("1", retrievedData.get("binanceCount").toString());
+        assertEquals(validTimestamp.toString(), retrievedData.get("coinGeckoTs").toString());
+        assertEquals(validTimestamp.toString(), retrievedData.get("binanceTs").toString());
+    }
+
+    @Test
     public void bisqIndexCalculation_oneOutlierPriceWideRange() {
         String fiatCoin = "BRL";
         List<ExchangeRateProvider> providers = asList(
@@ -517,7 +539,13 @@ public class ExchangeRateServiceTest {
         return dummyProvider;
     }
 
-    private ExchangeRateProvider buildDummyExchangeRateProviderWithRate(String providerName, String currencyCode, Double dummyRate) {
+    private ExchangeRateProvider buildDummyExchangeRateProviderWithRate(
+            String providerName, String currencyCode, Double rate) {
+        return buildDummyExchangeRateProviderWithRateAndTimestamp(
+                providerName, currencyCode, rate, System.currentTimeMillis());
+    }
+    private ExchangeRateProvider buildDummyExchangeRateProviderWithRateAndTimestamp(
+            String providerName, String currencyCode, Double rate, long timestamp) {
         ExchangeRateProvider dummyProvider = new ExchangeRateProvider(
                 new StandardEnvironment(),
                 providerName,
@@ -534,8 +562,8 @@ public class ExchangeRateServiceTest {
                 HashSet<ExchangeRate> exchangeRates = new HashSet<>();
                 exchangeRates.add(new ExchangeRate(
                         currencyCode,
-                        dummyRate,
-                        System.currentTimeMillis(),
+                        rate,
+                        timestamp,
                         getName())); // ExchangeRateProvider name
                 return exchangeRates;
             }

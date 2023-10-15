@@ -39,6 +39,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -54,6 +55,7 @@ import java.util.stream.Stream;
  */
 public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRate>> {
 
+    private static final long STALE_PRICE_INTERVAL_MILLIS = TimeUnit.MINUTES.toMillis(10);
     private static Set<String> SUPPORTED_CRYPTO_CURRENCIES = new HashSet<>();
     private static Set<String> SUPPORTED_FIAT_CURRENCIES = new HashSet<>();
     private final Set<String> providerExclusionList = new HashSet<>();
@@ -129,6 +131,22 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
 
     public String getPrefix() {
         return prefix;
+    }
+
+    public void maybeClearStaleRates() {
+        // a stale rate is older than the specified interval, except:
+        // timestamp of 0L is used as special case re: CoinMarketCap and BitcoinAverage
+        //   (https://github.com/bisq-network/bisq-pricenode/issues/23)
+        long staleTimestamp = new Date().getTime() - STALE_PRICE_INTERVAL_MILLIS;
+        Set<ExchangeRate> nonStaleRates = get().stream()
+                    .filter(e -> e.getTimestamp() == 0L || e.getTimestamp() > staleTimestamp)
+                    .collect(Collectors.toSet());
+        long numberOriginalRates = get().size();
+        if (numberOriginalRates > nonStaleRates.size()) {
+            put(nonStaleRates);
+            log.warn("{} {} stale rates removed, now {} rates",
+                    getName(), numberOriginalRates, nonStaleRates.size());
+        }
     }
 
     @Override
