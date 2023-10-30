@@ -51,6 +51,10 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
         return cachedResult;
     }
 
+    public final void put(T values) {
+        cachedResult = values;
+    }
+
     @Override
     public final void start() {
         // do the initial refresh asynchronously
@@ -80,7 +84,7 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
     private void refresh() {
         long ts = System.currentTimeMillis();
 
-        cachedResult = doGet();
+        put(doGet());
 
         log.info("refresh took {} ms.", (System.currentTimeMillis() - ts));
 

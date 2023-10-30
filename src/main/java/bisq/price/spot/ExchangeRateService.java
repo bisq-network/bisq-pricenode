@@ -60,6 +60,7 @@ class ExchangeRateService {
         Map<String, ExchangeRate> aggregateExchangeRates = getAggregateExchangeRates();
 
         providers.forEach(p -> {
+            p.maybeClearStaleRates();
             // Specific metadata fields for specific providers are expected by the client,
             // mostly for historical reasons
             // Therefore, add metadata fields for all known providers
