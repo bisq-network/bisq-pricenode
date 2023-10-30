@@ -19,8 +19,8 @@ package bisq.price.spot;
 
 import bisq.common.util.Tuple2;
 import bisq.core.util.InlierUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import bisq.price.util.GatedLogging;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
@@ -32,11 +32,12 @@ import java.util.stream.Collectors;
  * High-level {@link ExchangeRate} data operations.
  */
 @Service
+@Slf4j
 class ExchangeRateService {
-    protected final Logger log = LoggerFactory.getLogger(this.getClass());
     private final Environment env;
     private final List<ExchangeRateProvider> providers;
     private final List<ExchangeRateTransformer> transformers;
+    private final GatedLogging gatedLogging = new GatedLogging();
 
     /**
      * Construct an {@link ExchangeRateService} with a list of all
@@ -87,6 +88,7 @@ class ExchangeRateService {
      * by currency code
      */
     private Map<String, ExchangeRate> getAggregateExchangeRates() {
+        boolean maybeLogDetails = gatedLogging.gatingOperation();
         Map<String, ExchangeRate> aggregateExchangeRates = new HashMap<>();
 
         // Query all providers and collect all exchange rates, grouped by currency code
@@ -110,7 +112,7 @@ class ExchangeRateService {
             } else {
                 // If multiple providers have rates for this currency, then
                 // aggregate = average of the rates
-                double priceAvg = priceAverageWithOutliersRemoved(exchangeRateList, currencyCode);
+                double priceAvg = priceAverageWithOutliersRemoved(exchangeRateList, currencyCode, maybeLogDetails);
                 aggregateExchangeRate = new ExchangeRate(
                         currencyCode,
                         BigDecimal.valueOf(priceAvg),
@@ -123,7 +125,8 @@ class ExchangeRateService {
         return aggregateExchangeRates;
     }
 
-    private double priceAverageWithOutliersRemoved(List<ExchangeRate> exchangeRateList, String contextInfo) {
+    private double priceAverageWithOutliersRemoved(
+            List<ExchangeRate> exchangeRateList, String contextInfo, boolean logOutliers) {
         final List<Double> yValues = exchangeRateList.stream().
                 mapToDouble(ExchangeRate::getPrice).boxed().collect(Collectors.toList());
         Tuple2<Double, Double> tuple = InlierUtil.findInlierRange(yValues, 0, getOutlierStdDeviation());
@@ -145,16 +148,18 @@ class ExchangeRateService {
         double priceAvg = opt.orElseThrow(IllegalStateException::new);
 
         // log the outlier prices which were removed from the average, if any.
-        for (ExchangeRate badRate : exchangeRateList.stream()
-                .filter(e -> !filteredPrices.contains(e))
-                .collect(Collectors.toList())) {
-            log.info("{} {} outlier price removed:{}, lower/upper bounds:{}/{}, consensus price:{}",
-                    badRate.getProvider(),
-                    badRate.getCurrency(),
-                    badRate.getPrice(),
-                    lowerBound,
-                    upperBound,
-                    priceAvg);
+        if (logOutliers) {
+            for (ExchangeRate badRate : exchangeRateList.stream()
+                    .filter(e -> !filteredPrices.contains(e))
+                    .collect(Collectors.toList())) {
+                log.info("{} {} outlier price removed:{}, lower/upper bounds:{}/{}, consensus price:{}",
+                        badRate.getProvider(),
+                        badRate.getCurrency(),
+                        badRate.getPrice(),
+                        lowerBound,
+                        upperBound,
+                        priceAvg);
+            }
         }
         return priceAvg;
     }

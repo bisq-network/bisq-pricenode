@@ -20,6 +20,8 @@ package bisq.price.spot;
 import bisq.core.locale.CurrencyUtil;
 import bisq.core.locale.TradeCurrency;
 import bisq.price.PriceProvider;
+import bisq.price.util.GatedLogging;
+import lombok.Getter;
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeFactory;
 import org.knowm.xchange.currency.Currency;
@@ -32,7 +34,6 @@ import org.knowm.xchange.service.marketdata.params.CurrencyPairsParam;
 import org.knowm.xchange.service.marketdata.params.Params;
 import org.springframework.core.env.Environment;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -59,6 +60,8 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
     private final String name;
     private final String prefix;
     private final Environment env;
+    @Getter
+    private final GatedLogging gatedLogging = new GatedLogging();
 
     public ExchangeRateProvider(Environment env, String name, String prefix, Duration refreshInterval) {
         super(refreshInterval);

@@ -19,14 +19,12 @@ package bisq.price.spot;
 
 import bisq.price.spot.providers.BlueRateProvider;
 import bisq.price.util.bluelytics.ArsBlueMarketGapProvider;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 import java.util.OptionalDouble;
 
 @Component
-@Slf4j
 public class ArsBlueRateTransformer implements ExchangeRateTransformer {
     private final ArsBlueMarketGapProvider blueMarketGapProvider;
 
@@ -54,8 +52,8 @@ public class ArsBlueRateTransformer implements ExchangeRateTransformer {
                 originalExchangeRate.getProvider()
         );
 
-        log.info(String.format("%s transformed from %s to %s",
-                originalExchangeRate.getCurrency(), originalExchangeRate.getPrice(), blueRate));
+        provider.getGatedLogging().maybeLogInfo(String.format("%s transformed from %s to %s",
+                    originalExchangeRate.getCurrency(), originalExchangeRate.getPrice(), blueRate));
 
         return Optional.of(newExchangeRate);
     }
