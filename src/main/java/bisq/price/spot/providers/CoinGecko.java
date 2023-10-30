@@ -17,26 +17,22 @@
 
 package bisq.price.spot.providers;
 
-import bisq.asset.Coin;
 import bisq.price.spot.ExchangeRate;
 import bisq.price.spot.ExchangeRateProvider;
 import bisq.price.util.coingecko.CoinGeckoMarketData;
 
 import bisq.price.util.coingecko.CoinGeckoTicker;
-import lombok.Getter;
-import lombok.Setter;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
-import org.springframework.http.RequestEntity;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.Duration;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -44,7 +40,6 @@ import java.util.stream.Collectors;
 @Component
 class CoinGecko extends ExchangeRateProvider {
     private static final String GET_EXCHANGE_RATES_URL = "https://api.coingecko.com/api/v3/exchange_rates";
-    private final RestTemplate restTemplate = new RestTemplate();
 
     public CoinGecko(Environment env) {
         super(env, "COINGECKO", "coingecko", Duration.ofMinutes(1));
@@ -90,14 +85,11 @@ class CoinGecko extends ExchangeRateProvider {
     }
 
     private CoinGeckoMarketData getMarketData() {
-        return restTemplate.exchange(
-                RequestEntity
-                        .get(UriComponentsBuilder
-                                .fromUriString(CoinGecko.GET_EXCHANGE_RATES_URL).build()
-                                .toUri())
-                        .build(),
-                new ParameterizedTypeReference<CoinGeckoMarketData>() {
-                }
-        ).getBody();
+        return WebClient.create().get()
+                .uri(CoinGecko.GET_EXCHANGE_RATES_URL)
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(CoinGeckoMarketData.class)
+                .block(Duration.of(30, ChronoUnit.SECONDS));
     }
 }
