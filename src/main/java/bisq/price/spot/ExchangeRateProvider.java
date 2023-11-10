@@ -134,6 +134,9 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
     }
 
     public void maybeClearStaleRates() {
+        if (get() == null) {
+            return;
+        }
         // a stale rate is older than the specified interval, except:
         // timestamp of 0L is used as special case re: CoinMarketCap and BitcoinAverage
         //   (https://github.com/bisq-network/bisq-pricenode/issues/23)
