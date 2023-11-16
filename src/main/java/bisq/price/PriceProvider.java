@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -36,6 +37,7 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final Timer timer = new Timer(true);
+    private final AtomicBoolean isRefreshInProgress = new AtomicBoolean();
 
     protected final Duration refreshInterval;
 
@@ -60,7 +62,11 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
         // do the initial refresh asynchronously
         UserThread.runAfter(() -> {
             try {
-                refresh();
+                if (!isRefreshInProgress.get()) {
+                    refresh();
+                } else {
+                    log.debug("Refresh in progress. Skipping this iteration.");
+                }
             } catch (Throwable t) {
                 log.warn("initial refresh failed", t);
             }
@@ -70,7 +76,11 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
             @Override
             public void run() {
                 try {
-                    refresh();
+                    if (!isRefreshInProgress.get()) {
+                        refresh();
+                    } else {
+                        log.debug("Refresh in progress. Skipping this iteration.");
+                    }
                 } catch (Throwable t) {
                     // we only log scheduled calls to refresh that fail to ensure that
                     // the application does *not* halt, assuming the failure is temporary
@@ -82,13 +92,16 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
     }
 
     private void refresh() {
-        long ts = System.currentTimeMillis();
+        isRefreshInProgress.set(true);
+        try {
+            long ts = System.currentTimeMillis();
+            put(doGet());
+            log.info("refresh took {} ms.", (System.currentTimeMillis() - ts));
+            onRefresh();
 
-        put(doGet());
-
-        log.info("refresh took {} ms.", (System.currentTimeMillis() - ts));
-
-        onRefresh();
+        } finally {
+            isRefreshInProgress.set(false);
+        }
     }
 
     protected abstract T doGet();
