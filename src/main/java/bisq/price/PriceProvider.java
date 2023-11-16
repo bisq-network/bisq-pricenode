@@ -39,7 +39,7 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
 
     protected final Duration refreshInterval;
 
-    private T cachedResult;
+    private volatile T cachedResult;
 
     public PriceProvider(Duration refreshInterval) {
         this.refreshInterval = refreshInterval;
