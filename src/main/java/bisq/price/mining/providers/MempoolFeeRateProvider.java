@@ -72,8 +72,6 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
     }
 
     protected FeeRate doGet() {
-        // Default value is the minimum rate. If the connection to the fee estimate
-        // provider fails, we fall back to this value.
         try {
             return getEstimatedFeeRate();
         }
@@ -81,8 +79,9 @@ abstract class MempoolFeeRateProvider extends FeeRateProvider {
             // Something happened with the connection
             log.error("Error retrieving bitcoin mining fee estimation: " + e.getMessage());
         }
-
-        return new FeeRate("BTC", MIN_FEE_RATE_FOR_TRADING, MIN_FEE_RATE_FOR_WITHDRAWAL, Instant.now().getEpochSecond());
+        // null rate so not to pull down the average when a provider is offline.
+        // see FeeRateService.java L78 : getFees() "Process each provider"
+        return null;
     }
 
     private FeeRate getEstimatedFeeRate() {
