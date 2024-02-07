@@ -71,11 +71,11 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         this.prefix = prefix;
         this.env = env;
         String[] excludedByProvider =
-                env.getProperty("bisq.price.fiatcurrency.excludedByProvider", "")
+                env.getProperty("bisq.price.currency.excludedByProvider", "")
                         .toUpperCase().trim().split("\\s*,\\s*");
         for (String s : excludedByProvider) {
             String[] splits = s.split(":");
-            if (splits.length == 2 && splits[0].equalsIgnoreCase(name) && CurrencyUtil.isFiatCurrency(splits[1])) {
+            if (splits.length == 2 && splits[0].equalsIgnoreCase(name)) {
                 providerExclusionList.add(splits[1]);
             }
         }
@@ -122,7 +122,10 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
             log.info("crypto currencies excluded: {}", validatedExclusionList);
             log.info("crypto currencies supported: {}", SUPPORTED_CRYPTO_CURRENCIES.size());
         }
-        return SUPPORTED_CRYPTO_CURRENCIES;
+        // filter out any provider specific ccy exclusions
+        return SUPPORTED_CRYPTO_CURRENCIES.stream()
+                .filter(ccy -> !providerExclusionList.contains(ccy.toUpperCase()))
+                .collect(Collectors.toSet());
     }
 
     public String getName() {
