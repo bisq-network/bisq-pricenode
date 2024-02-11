@@ -132,7 +132,7 @@ public class ExchangeRateServiceTest {
         Environment mockedEnvironment = mock(Environment.class);
         when(mockedEnvironment.getProperty(eq("bisq.price.cryptocurrency.excluded"), anyString())).thenReturn("");
         when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcvString);
-        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcvString);
+        when(mockedEnvironment.getProperty(eq("bisq.price.currency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcvString);
         ExchangeRateProvider dummyProvider = buildDummyExchangeRateProvider(rateCurrencyCodes, mockedEnvironment);
         ExchangeRateService service = new ExchangeRateService(mockedEnvironment, List.of(dummyProvider), List.of());
 
@@ -275,7 +275,7 @@ public class ExchangeRateServiceTest {
         String providerExcludedCcyString = "HUOBI:BRL,BINANCE:GBP,BINANCE:SEK";
         Environment mockedEnvironment = mock(Environment.class);
         when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcyString);
-        when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcyString);
+        when(mockedEnvironment.getProperty(eq("bisq.price.currency.excludedByProvider"), anyString())).thenReturn(providerExcludedCcyString);
 
         class MockedExchangeRateProvider extends ExchangeRateProvider {
             MockedExchangeRateProvider() {
