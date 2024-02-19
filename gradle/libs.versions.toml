@@ -29,6 +29,7 @@ known-xchange-coinone = { module = 'org.knowm.xchange:xchange-coinone', version.
 known-xchange-independentreserve = { module = 'org.knowm.xchange:xchange-independentreserve', version.ref = 'knowm-xchange-lib' }
 known-xchange-kraken = { module = 'org.knowm.xchange:xchange-kraken', version.ref = 'knowm-xchange-lib' }
 known-xchange-luno = { module = 'org.knowm.xchange:xchange-luno', version.ref = 'knowm-xchange-lib' }
+known-xchange-kucoin = { module = 'org.knowm.xchange:xchange-kucoin', version.ref = 'knowm-xchange-lib' }
 known-xchange-mercadobitcoin = { module = 'org.knowm.xchange:xchange-mercadobitcoin', version.ref = 'knowm-xchange-lib' }
 known-xchange-paribu = { module = 'org.knowm.xchange:xchange-paribu', version.ref = 'knowm-xchange-lib' }
 logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback-lib' }
@@ -45,7 +46,7 @@ knowm-xchange-libs = [
     'knowm-xchange-binance', 'known-xchange-bitfinex',
     'known-xchange-bitflyer', 'known-xchange-bitstamp', 'known-xchange-btcmarkets',
     'known-xchange-coinbasepro', 'known-xchange-coinone',
-    'known-xchange-independentreserve',
+    'known-xchange-independentreserve','known-xchange-kucoin',
     'known-xchange-kraken', 'known-xchange-luno', 'known-xchange-mercadobitcoin', 'known-xchange-paribu'
 ]
 
