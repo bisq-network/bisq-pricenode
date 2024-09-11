@@ -41,10 +41,10 @@ import static org.springframework.boot.context.properties.bind.Bindable.setOf;
 /**
  * Yadio is used for "marginal market" currencies. Originally thought for:
  * <ul>
- *     <li>PYG (Paraguayan Guarani</li>
+ *     <li>PYG (Paraguayan Guarani)</li>
  *     <li>DOP (Dominican Peso)</li>
- *     <li>BOB (Bolivian Bolivariano</li>
- *     <li>EGP (Egyptian Pound</li>
+ *     <li>BOB (Bolivian Bolivariano)</li>
+ *     <li>EGP (Egyptian Pound)</li>
  * </ul>
  * The API uses real market data ignoring official goverment official currency rates, therefore this class also implements BlueRateProvider
  * and its used to provide price points for:
@@ -57,9 +57,9 @@ import static org.springframework.boot.context.properties.bind.Bindable.setOf;
  * Further analysis could be made to incorporate more currencies like VES (Venezuela).
  */
 @Component
-public class Yadio extends ExchangeRateProvider implements BlueRateProvider {
+class Yadio extends ExchangeRateProvider implements BlueRateProvider {
 
-    public static final String PROVIDER_NAME = "YADIO";
+    private static final String PROVIDER_NAME = "YADIO";
 
     private static final String YADIO_EXCHANGES_API_ENDPOINT = "https://api.yadio.io/exrates";
 
@@ -123,7 +123,7 @@ public class Yadio extends ExchangeRateProvider implements BlueRateProvider {
                 String currencySymbol = entry.getKey();
                 double priceInUSD = ((Number) entry.getValue()).doubleValue();
                 double priceInBTC = priceInUSD * ticker.getBTC();
-                return toExchangeRate(currencySymbol, priceInBTC);
+                return toExchangeRate(currencySymbol, priceInBTC, ticker.getTimestamp());
             } catch (Exception e) {
                 log.error("Failed to parse price rate for currency {}", entry.getKey(), e);
                 return Optional.empty();
@@ -131,12 +131,12 @@ public class Yadio extends ExchangeRateProvider implements BlueRateProvider {
         };
     }
 
-    private Optional<ExchangeRate> toExchangeRate(String currencySymbol, double price) {
+    private Optional<ExchangeRate> toExchangeRate(String currencySymbol, double price, long timestamp) {
         return Optional.of(
                 new ExchangeRate(
                         currencySymbol,
                         price,
-                        System.currentTimeMillis(),
+                        timestamp,
                         Yadio.PROVIDER_NAME
                 )
         );
