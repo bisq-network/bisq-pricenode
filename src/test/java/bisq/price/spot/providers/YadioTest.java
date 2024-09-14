@@ -21,22 +21,13 @@ import bisq.price.AbstractExchangeRateProviderTest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
-public class CryptoYaTest extends AbstractExchangeRateProviderTest {
+public class YadioTest extends AbstractExchangeRateProviderTest {
 
     @Test
     public void doGet_successfulCall() {
-        try {
-            doGet_successfulCall(new CryptoYa(new StandardEnvironment()));
-        } catch (WebClientResponseException wcre) {
-            log.error("Error during request to CryptoYa: {}", wcre.getResponseBodyAsString());
-            // cryptoya added ip blocking to request out of LATAM
-            if (wcre.getRawStatusCode() != 403) {
-                throw wcre;
-            }
-        }
+        doGet_successfulCall(new Yadio(new StandardEnvironment()));
     }
 
 }

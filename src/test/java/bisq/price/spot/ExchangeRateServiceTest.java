@@ -271,7 +271,7 @@ public class ExchangeRateServiceTest {
      */
     @Test
     public void getAllMarketPrices_withMultipleProviders_excludedCurrencyCodes() {
-        String excludedCcyString = "LBP,USD,EUR";
+        String excludedCcyString = "USD,EUR";
         String providerExcludedCcyString = "HUOBI:BRL,BINANCE:GBP,BINANCE:SEK";
         Environment mockedEnvironment = mock(Environment.class);
         when(mockedEnvironment.getProperty(eq("bisq.price.fiatcurrency.excluded"), anyString())).thenReturn(excludedCcyString);
@@ -330,7 +330,7 @@ public class ExchangeRateServiceTest {
         assertEquals(3, logsList.size());
         assertEquals(Level.INFO, logsList.get(1).getLevel());
         assertTrue(logsList.get(0).getFormattedMessage().endsWith("will refresh every PT24H"));
-        assertTrue(logsList.get(1).getFormattedMessage().endsWith("fiat currencies excluded: [LBP, USD, EUR]"));
+        assertTrue(logsList.get(1).getFormattedMessage().endsWith("fiat currencies excluded: [USD, EUR]"));
         assertTrue(logsList.get(2).getFormattedMessage().endsWith("fiat currencies supported: " + numCurrenciesFromProvider));
     }
 
