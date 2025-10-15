@@ -1,7 +1,7 @@
 package bisq.price.mining;
 
-import bisq.common.config.Config;
 import bisq.price.mining.providers.MempoolFeeRateProviderTest;
+import bisq.price.common.config.Config;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

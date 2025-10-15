@@ -1,7 +1,6 @@
 plugins {
     id 'application'
     alias(libs.plugins.springboot)
-    id 'bisq.post-build'
 }
 
 repositories {
@@ -31,23 +30,8 @@ jar.manifest.attributes(
         "Implementation-Version": version
 )
 
-configurations.all {
-    exclude group: 'bisq', module: 'proto'
-    exclude group: 'bisq', module: 'p2p'
-    exclude group: 'com.github.bisq-network:bitcoinj'
-    exclude group: 'com.github.bisq-network.netlayer'
-    exclude group: 'com.github.bisq-network.tor-binary'
-    exclude group: 'io.grpc'
-    exclude group: 'org.fxmisc.easybind'
-}
-
 dependencies {
     implementation enforcedPlatform(project(':platform'))
-
-    // We need three subprojects from includeBuild('bisq'), with some of their transitive dependencies.
-    implementation 'bisq:assets'
-    implementation 'bisq:common'
-    implementation 'bisq:core'
 
     implementation libs.bundles.knowm.xchange.libs
 

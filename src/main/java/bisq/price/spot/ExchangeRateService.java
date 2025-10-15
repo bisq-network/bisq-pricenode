@@ -17,8 +17,8 @@
 
 package bisq.price.spot;
 
-import bisq.common.util.Tuple2;
-import bisq.core.util.InlierUtil;
+import bisq.price.common.util.InlierUtil;
+import bisq.price.common.util.Tuple2;
 import bisq.price.util.GatedLogging;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.env.Environment;

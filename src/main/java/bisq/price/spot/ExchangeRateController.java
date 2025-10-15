@@ -17,9 +17,9 @@
 
 package bisq.price.spot;
 
-import bisq.common.config.Config;
 import bisq.price.PriceController;
 import bisq.price.mining.FeeRateService;
+import bisq.price.common.config.Config;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

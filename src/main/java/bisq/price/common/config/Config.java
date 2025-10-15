@@ -15,18 +15,14 @@
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package bisq.price.util;
+package bisq.price.common.config;
 
-import bisq.core.locale.CurrencyUtil;
-import bisq.core.locale.TradeCurrency;
+// Borrowed from bisq.common.config.Config to avoid dependency on bisq.common
+public class Config {
 
-import java.util.Set;
-import java.util.stream.Collectors;
-
-public abstract class Altcoins {
-
-    public static final Set<String> ALL_SUPPORTED =
-        CurrencyUtil.getAllSortedCryptoCurrencies().stream()
-            .map(TradeCurrency::getCode)
-            .collect(Collectors.toSet());
+    public static final String LEGACY_FEE_DATAMAP = "dataMap";
+    public static final String BTC_FEE_INFO = "bitcoinFeeInfo";
+    public static final String BTC_FEES_TS = "bitcoinFeesTs";
+    public static final String BTC_TX_FEE = "btcTxFee";
+    public static final String BTC_MIN_TX_FEE = "btcMinTxFee";
 }

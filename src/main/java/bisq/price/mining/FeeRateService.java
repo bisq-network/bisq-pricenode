@@ -17,8 +17,7 @@
 
 package bisq.price.mining;
 
-import bisq.common.config.Config;
-
+import bisq.price.common.config.Config;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
