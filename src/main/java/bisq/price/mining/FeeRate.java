@@ -17,9 +17,12 @@
 
 package bisq.price.mining;
 
+import lombok.Getter;
+
 /**
  * A value object representing the mining fee rate for a given base currency.
  */
+@Getter
 public class FeeRate {
 
     private final String currency;
@@ -34,19 +37,4 @@ public class FeeRate {
         this.timestamp = timestamp;
     }
 
-    public String getCurrency() {
-        return currency;
-    }
-
-    public long getPrice() {
-        return price;
-    }
-
-    public long getMinimumFee() {
-        return minimumFee;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
 }

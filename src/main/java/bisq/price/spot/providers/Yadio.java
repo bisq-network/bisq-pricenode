@@ -36,8 +36,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.springframework.boot.context.properties.bind.Bindable.setOf;
-
 /**
  * Yadio is used for "marginal market" currencies. Originally thought for:
  * <ul>

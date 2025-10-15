@@ -21,6 +21,7 @@ import bisq.price.AbstractExchangeRateProviderTest;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.env.StandardEnvironment;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 @Slf4j
@@ -33,7 +34,7 @@ public class CryptoYaTest extends AbstractExchangeRateProviderTest {
         } catch (WebClientResponseException wcre) {
             log.error("Error during request to CryptoYa: {}", wcre.getResponseBodyAsString());
             // cryptoya added ip blocking to request out of LATAM
-            if (wcre.getRawStatusCode() != 403) {
+            if (wcre.getStatusCode() != HttpStatus.FORBIDDEN) {
                 throw wcre;
             }
         }

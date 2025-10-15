@@ -23,8 +23,6 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import com.google.common.collect.Sets;
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -32,8 +30,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.env.StandardEnvironment;
 
 import javax.annotation.Nullable;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static java.lang.Thread.sleep;
@@ -108,8 +108,8 @@ public class ExchangeRateServiceTest {
     public void getAllMarketPrices_withMultipleProviders_differentCurrencyCodes() {
         int numberOfCurrencyPairsOnExchange = 1;
         List<ExchangeRateProvider> providers = asList(
-            buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange),
-            buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange));
+                buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange),
+                buildDummyExchangeRateProvider(numberOfCurrencyPairsOnExchange));
         Map<String, Object> retrievedData = new ExchangeRateService(new StandardEnvironment(), providers, Collections.emptyList()).getAllMarketPrices();
 
         doSanityChecksForRetrievedDataMultipleProviders(retrievedData, providers);
@@ -294,7 +294,7 @@ public class ExchangeRateServiceTest {
                 for (String rateCurrencyCode : getSupportedFiatCurrencies()) {
                     exchangeRates.add(new ExchangeRate(
                             rateCurrencyCode,
-                            RandomUtils.nextDouble(1, 1000), // random price
+                            ThreadLocalRandom.current().nextDouble(1, 1000), // random price
                             System.currentTimeMillis(),
                             getName())); // ExchangeRateProvider name
                 }
@@ -404,13 +404,13 @@ public class ExchangeRateServiceTest {
     }
 
     private void checkBisqIndexCalculationNoOutliers(List<ExchangeRate> retrievedData,
-                                                      List<ExchangeRateProvider> providers) {
+                                                     List<ExchangeRateProvider> providers) {
         checkBisqIndexCalculation(retrievedData, providers, Collections.emptyList());
     }
 
     private void checkBisqIndexCalculationWithOutlier(List<ExchangeRate> retrievedData,
-                                           List<ExchangeRateProvider> providers,
-                                           List<String> outlierProviderNames) {
+                                                      List<ExchangeRateProvider> providers,
+                                                      List<String> outlierProviderNames) {
         checkBisqIndexCalculation(retrievedData, providers, outlierProviderNames);
     }
 
@@ -479,7 +479,7 @@ public class ExchangeRateServiceTest {
                     exchangeRates.add(new ExchangeRate(
                             // random symbol, avoid duplicates
                             "DUM-" + getRandomAlphaNumericString(3),
-                            RandomUtils.nextDouble(1, 1000), // random price
+                            ThreadLocalRandom.current().nextDouble(1, 1000), // random price
                             System.currentTimeMillis(),
                             getName())); // ExchangeRateProvider name
                 }
@@ -519,7 +519,7 @@ public class ExchangeRateServiceTest {
                 for (String rateCurrencyCode : rateCurrencyCodes) {
                     exchangeRates.add(new ExchangeRate(
                             rateCurrencyCode,
-                            RandomUtils.nextDouble(1, 1000), // random price
+                            ThreadLocalRandom.current().nextDouble(1, 1000), // random price
                             System.currentTimeMillis(),
                             getName())); // ExchangeRateProvider name
                 }
@@ -544,6 +544,7 @@ public class ExchangeRateServiceTest {
         return buildDummyExchangeRateProviderWithRateAndTimestamp(
                 providerName, currencyCode, rate, System.currentTimeMillis());
     }
+
     private ExchangeRateProvider buildDummyExchangeRateProviderWithRateAndTimestamp(
             String providerName, String currencyCode, Double rate, long timestamp) {
         ExchangeRateProvider dummyProvider = new ExchangeRateProvider(
@@ -580,6 +581,19 @@ public class ExchangeRateServiceTest {
     }
 
     private static String getRandomAlphaNumericString(int length) {
-        return RandomStringUtils.random(length, true, true);
+        if (length <= 0) {
+            throw new IllegalArgumentException("Length must be positive");
+        }
+
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            int index = random.nextInt(chars.length());
+            sb.append(chars.charAt(index));
+        }
+
+        return sb.toString();
     }
 }

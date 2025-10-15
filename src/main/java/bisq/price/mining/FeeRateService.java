@@ -63,7 +63,7 @@ public class FeeRateService {
         providers.forEach(p -> {
             FeeRate feeRate = p.get();
             if (feeRate == null) {
-                log.warn("feeRate is null, provider={} ", p.toString());
+                log.warn("feeRate is null, provider={} ", p);
                 return;
             }
             String currency = feeRate.getCurrency();
