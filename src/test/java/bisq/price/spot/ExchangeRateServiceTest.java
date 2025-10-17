@@ -17,7 +17,7 @@
 
 package bisq.price.spot;
 
-import bisq.core.locale.CurrencyUtil;
+import bisq.price.common.CurrencyUtil;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
@@ -319,7 +319,7 @@ public class ExchangeRateServiceTest {
         MockedExchangeRateProvider mockedExchangeRateProvider = new MockedExchangeRateProvider();
         Set<ExchangeRate> exchangeRates = mockedExchangeRateProvider.doGet();
         assertTrue(exchangeRates.size() > excludedFiatCurrencies.size());
-        int numSortedFiatCurrencies = CurrencyUtil.getAllSortedFiatCurrencies().size();
+        int numSortedFiatCurrencies = CurrencyUtil.ALL_FIAT_CURRENCIES.size();
         int numCurrenciesFromProvider = mockedExchangeRateProvider.getSupportedFiatCurrencies().size();
         int missingCurrencyCount = numSortedFiatCurrencies - numCurrenciesFromProvider;
         assertEquals(missingCurrencyCount, excludedFiatCurrencies.size());

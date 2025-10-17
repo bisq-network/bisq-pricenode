@@ -17,19 +17,15 @@
 
 package bisq.price;
 
-import bisq.common.UserThread;
-
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.SmartLifecycle;
 
 import java.time.Duration;
-
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
 
@@ -57,14 +53,14 @@ public abstract class PriceProvider<T> implements SmartLifecycle, Supplier<T> {
 
     @Override
     public final void start() {
-        // do the initial refresh asynchronously
-        UserThread.runAfter(() -> {
+        // do the initial refresh asynchronously without delay
+        CompletableFuture.runAsync(() -> {
             try {
                 refresh();
             } catch (Throwable t) {
                 log.warn("initial refresh failed", t);
             }
-        }, 1, TimeUnit.MILLISECONDS);
+        });
 
         timer.scheduleAtFixedRate(new TimerTask() {
             @Override

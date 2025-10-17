@@ -17,9 +17,8 @@
 
 package bisq.price.spot;
 
-import bisq.core.locale.CurrencyUtil;
-import bisq.core.locale.TradeCurrency;
 import bisq.price.PriceProvider;
+import bisq.price.common.CurrencyUtil;
 import bisq.price.util.GatedLogging;
 import lombok.Getter;
 import org.knowm.xchange.Exchange;
@@ -93,8 +92,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                     .filter(ccy -> !ccy.isEmpty())
                     .filter(CurrencyUtil::isFiatCurrency)
                     .collect(Collectors.toList()).toString();
-            SUPPORTED_FIAT_CURRENCIES = CurrencyUtil.getAllSortedFiatCurrencies().stream()
-                    .map(TradeCurrency::getCode)
+            SUPPORTED_FIAT_CURRENCIES = CurrencyUtil.ALL_FIAT_CURRENCIES.stream()
                     .filter(ccy -> !validatedExclusionList.contains(ccy.toUpperCase()))
                     .collect(Collectors.toSet());
             log.info("fiat currencies excluded: {}", validatedExclusionList);
@@ -115,8 +113,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                     .filter(ccy -> !ccy.isEmpty())
                     .filter(CurrencyUtil::isCryptoCurrency)
                     .collect(Collectors.toList()).toString();
-            SUPPORTED_CRYPTO_CURRENCIES = CurrencyUtil.getAllSortedCryptoCurrencies().stream()
-                    .map(TradeCurrency::getCode)
+            SUPPORTED_CRYPTO_CURRENCIES = CurrencyUtil.ALL_CRYPTO_CURRENCIES.stream()
                     .filter(ccy -> !validatedExclusionList.contains(ccy.toUpperCase()))
                     .collect(Collectors.toSet());
             log.info("crypto currencies excluded: {}", validatedExclusionList);
@@ -145,8 +142,8 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         //   (https://github.com/bisq-network/bisq-pricenode/issues/23)
         long staleTimestamp = new Date().getTime() - STALE_PRICE_INTERVAL_MILLIS;
         Set<ExchangeRate> nonStaleRates = get().stream()
-                    .filter(e -> e.getTimestamp() == 0L || e.getTimestamp() > staleTimestamp)
-                    .collect(Collectors.toSet());
+                .filter(e -> e.getTimestamp() == 0L || e.getTimestamp() > staleTimestamp)
+                .collect(Collectors.toSet());
         long numberOriginalRates = get().size();
         if (numberOriginalRates > nonStaleRates.size()) {
             put(nonStaleRates);
@@ -166,8 +163,8 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
      *                      polled
      * @return Exchange rates for Bisq-supported fiat currencies and altcoins in the
      * specified {@link Exchange}
-     * @see CurrencyUtil#getAllSortedFiatCurrencies()
-     * @see CurrencyUtil#getAllSortedCryptoCurrencies()
+     * @see CurrencyUtil#ALL_FIAT_CURRENCIES
+     * @see CurrencyUtil#ALL_CRYPTO_CURRENCIES
      * It must not pass exceptions up, instead return an empty set if there is a problem with the feed.
      * (otherwise PriceProvider would keep supplying stale rates).
      */
@@ -293,11 +290,11 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
                         }
                     });
         } catch (ExchangeException | // Errors reported by the exchange (rate limit, etc)
-                IOException | // Errors while trying to connect to the API (timeouts, etc)
-                // Potential error when integrating new exchange (hints that exchange
-                // provider implementation needs to overwrite
-                // requiresFilterDuringBulkTickerRetrieval() and have it return true )
-                IllegalArgumentException e) {
+                 IOException | // Errors while trying to connect to the API (timeouts, etc)
+                 // Potential error when integrating new exchange (hints that exchange
+                 // provider implementation needs to overwrite
+                 // requiresFilterDuringBulkTickerRetrieval() and have it return true )
+                 IllegalArgumentException e) {
             // Catch and handle all other possible exceptions
             // If there was a problem with polling this exchange, return right away,
             // since there are no results to parse and process
@@ -308,7 +305,7 @@ public abstract class ExchangeRateProvider extends PriceProvider<Set<ExchangeRat
         // Create an ExchangeRate for each desired currency pair ticker that was retrieved
         Predicate<Ticker> isDesiredFiatPair = t -> desiredFiatPairs.contains(t.getCurrencyPair());
         Predicate<Ticker> isDesiredCryptoPair = t -> desiredCryptoPairs.contains(t.getCurrencyPair());
-        Predicate<Ticker> isInverted =  t -> desiredFiatPairs.contains(t.getCurrencyPair()) &&
+        Predicate<Ticker> isInverted = t -> desiredFiatPairs.contains(t.getCurrencyPair()) &&
                 getSupportedCryptoCurrencies().contains(translateToBisqCurrency(t.getCurrencyPair().counter.getCurrencyCode()));
         tickersRetrievedFromExchange.stream()
                 .filter(isDesiredFiatPair.or(isDesiredCryptoPair)) // Only consider desired pairs
