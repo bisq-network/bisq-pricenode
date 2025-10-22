@@ -109,7 +109,7 @@ class ExchangeRateService {
             if (exchangeRateList.size() == 1) {
                 // If a single provider has rates for this currency, then aggregate = rate
                 // from that provider
-                aggregateExchangeRate = exchangeRateList.get(0);
+                aggregateExchangeRate = exchangeRateList.getFirst();
             } else {
                 // If multiple providers have rates for this currency, then
                 // aggregate = average of the rates
@@ -136,9 +136,9 @@ class ExchangeRateService {
         final List<ExchangeRate> filteredPrices = exchangeRateList.stream()
                 .filter(e -> e.getPrice() >= lowerBound)
                 .filter(e -> e.getPrice() <= upperBound)
-                .collect(Collectors.toList());
+                .toList();
 
-        if (filteredPrices.size() < 1) {
+        if (filteredPrices.isEmpty()) {
             log.error("{}: could not filter, revert to plain average. lowerBound={}, upperBound={}, stdDev={}, yValues={}",
                     contextInfo, lowerBound, upperBound, getOutlierStdDeviation(), yValues);
             return exchangeRateList.stream().mapToDouble(ExchangeRate::getPrice).average().getAsDouble();
@@ -152,7 +152,7 @@ class ExchangeRateService {
         if (logOutliers) {
             for (ExchangeRate badRate : exchangeRateList.stream()
                     .filter(e -> !filteredPrices.contains(e))
-                    .collect(Collectors.toList())) {
+                    .toList()) {
                 log.info("{} {} outlier price removed:{}, lower/upper bounds:{}/{}, consensus price:{}",
                         badRate.getProvider(),
                         badRate.getCurrency(),
