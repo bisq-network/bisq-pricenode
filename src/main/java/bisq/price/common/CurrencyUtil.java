@@ -26,7 +26,7 @@ public class CurrencyUtil {
     public static final Set<String> ALL_CRYPTO_CURRENCIES = Set.of(
             "ACM", "ADE", "AEON", "AMIT", "ANI", "ARQ", "ASK", "AEUR", "AUS", "BSQ",
             "BEAM", "DARX", "BTM", "BZC", "BLUR", "BLK-BURNT", "CRCL", "CTSC", "CASH2", "CHA",
-            "CLOAK", "XCP", "CRDS", "CROAT", "DST", "DAI", "D4RK", "DASH", "ONION",
+            "CLOAK", "XCP", "CRDS", "CROAT", "DST", "DAI", "D4RK", "DASH", "DCR", "ONION",
             "DXO", "DOGE", "DOI", "DONU", "DRGL", "EMC", "ERG", "ETH", "ETC", "ETHS",
             "FAIR", "FRTY", "FJC", "GALI", "GMCN", "GENX", "GRIN", "HATCH", "HLM", "ZEN",
             "IDA", "IRD", "KEK", "KYDC", "KORE", "ZOD", "LBC", "L-BTC", "LTC", "LCP",
