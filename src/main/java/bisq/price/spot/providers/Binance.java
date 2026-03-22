@@ -39,7 +39,7 @@ class Binance extends ExchangeRateProvider implements BlueRateProvider {
     @Override
     public Set<ExchangeRate> doGet() {
         // Supported fiat: EUR, GBP, NGN, RUB, TRY, UAH, ZAR
-        // Supported alts: BEAM, DAI, DASH, DCR, DOGE, ETC, ETH, LTC, NAV, PIVX, XMR, XZC,
+        // Supported alts: BEAM, DAI, DASH, DOGE, ETC, ETH, LTC, NAV, PIVX, XMR, XZC,
         // ZEC, ZEN
         return doGet(BinanceExchange.class);
     }
