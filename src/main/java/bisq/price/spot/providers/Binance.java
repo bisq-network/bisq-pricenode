@@ -39,8 +39,7 @@ class Binance extends ExchangeRateProvider implements BlueRateProvider {
     @Override
     public Set<ExchangeRate> doGet() {
         // Supported fiat: EUR, GBP, NGN, RUB, TRY, UAH, ZAR
-        // Supported alts: BEAM, DAI, DASH, DOGE, ETC, ETH, LTC, NAV, PIVX, XZC,
-        // ZEC, ZEN
+        // Supported alts: ETH, LTC, USDC, USDT-E
         // Note: XMR was delisted by Binance (Feb 2024), so the bulk ticker no
         // longer returns an XMR/BTC pair and this provider contributes no XMR rate.
         return doGet(BinanceExchange.class);

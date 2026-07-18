@@ -39,7 +39,7 @@ class Bitfinex extends ExchangeRateProvider {
     @Override
     public Set<ExchangeRate> doGet() {
         // Supported fiat: EUR, GBP, JPY, USD
-        // Supported alts: DAI, ETC, ETH, LTC, XMR, ZEC
+        // Supported alts: DAI, ETH, LTC, XMR
         return doGet(BitfinexExchange.class);
     }
 }
