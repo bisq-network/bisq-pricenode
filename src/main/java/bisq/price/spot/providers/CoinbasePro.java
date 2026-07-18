@@ -38,7 +38,7 @@ class CoinbasePro extends ExchangeRateProvider {
     @Override
     public Set<ExchangeRate> doGet() {
         // Supported fiat: EUR, USD, GBP
-        // Supported alts: DASH, DOGE, ETC, ETH, LTC, ZEC, ZEN
+        // Supported alts: ETH, LTC
         return doGet(CoinbaseProExchange.class);
     }
 
