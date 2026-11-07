@@ -68,7 +68,7 @@ public class FeeRateServiceTest {
     @Test
     public void getFees_singleProvider_feeBelowMin() {
         // One working provider, which returns a fee lower than the minimum
-        long providerFee = FeeRateProvider.MIN_FEE_RATE_FOR_TRADING - 3;
+        long providerFee = FeeRateProvider.MIN_FEE_RATE_FOR_TRADING - 1;
         FeeRateService service = new FeeRateService(
                 Collections.singletonList(
                         buildDummyReachableMempoolFeeRateProvider(providerFee)));
