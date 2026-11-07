@@ -28,7 +28,9 @@ public abstract class FeeRateProvider extends PriceProvider<FeeRate> {
 
     public static final long MIN_FEE_RATE_FOR_WITHDRAWAL = 1; // satoshi/vbyte
     public static final long MIN_FEE_RATE_FOR_TRADING = 10; // satoshi/vbyte
-    public static final long MAX_FEE_RATE = 1000;
+    // The cap of Bisq 1 (FeeService.BTC_MAX_TX_FEE from v1.10.1), so versions up to v1.10.0, which have no cap
+    // of their own, use the same maximum.
+    public static final long MAX_FEE_RATE = 600;
 
     public FeeRateProvider(Duration refreshInterval) {
         super(refreshInterval);
