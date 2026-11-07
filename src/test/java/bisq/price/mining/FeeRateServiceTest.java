@@ -44,8 +44,25 @@ public class FeeRateServiceTest {
         Map<String, Object> retrievedData = service.getFees();
 
         // Even with no working providers, we expect the service to return pre-configured
-        // minimum fee rate
-        doSanityChecksForRetrievedData(retrievedData, FeeRateProvider.MIN_FEE_RATE_FOR_TRADING);
+        // minimum fee rate, but with timestamp 0, so that Bisq 1 clients do not take the
+        // floor for an estimate and keep their last fee rate
+        assertEquals(0L, retrievedData.get(Config.BTC_FEES_TS));
+        Map<String, Long> retrievedDataMap = (Map<String, Long>) retrievedData.get(Config.LEGACY_FEE_DATAMAP);
+        assertEquals(2, retrievedDataMap.size());
+        assertEquals(FeeRateProvider.MIN_FEE_RATE_FOR_TRADING, retrievedDataMap.get(Config.BTC_TX_FEE));
+    }
+
+    @Test
+    public void getFees_oneOfSeveralProvidersUnreachable() {
+        FeeRateService service = new FeeRateService(asList(
+                buildDummyUnreachableMempoolFeeRateProvider(),
+                buildDummyReachableMempoolFeeRateProvider(FeeRateProvider.MIN_FEE_RATE_FOR_TRADING * 3)));
+
+        Map<String, Object> retrievedData = service.getFees();
+
+        // One estimate is enough for a timestamp, and the unreachable provider does not
+        // pull down the average
+        doSanityChecksForRetrievedData(retrievedData, FeeRateProvider.MIN_FEE_RATE_FOR_TRADING * 3);
     }
 
     @Test
