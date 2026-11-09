@@ -90,8 +90,11 @@ public class FeeRateService {
 
         // Prepare response: Add timestamp of now
         // Since this is an average, the timestamp is associated with when the moment in
-        // time when the avg was computed
-        metadata.put(Config.BTC_FEES_TS, Instant.now().getEpochSecond());
+        // time when the avg was computed.
+        // Without any estimate the rates are only the floors. Timestamp 0 makes Bisq 1 clients
+        // ignore them and keep their last fee rate, instead of using the floor in a fee spike.
+        long feesTs = amountOfFeeRates.intValue() > 0 ? Instant.now().getEpochSecond() : 0;
+        metadata.put(Config.BTC_FEES_TS, feesTs);
 
         // Prepare response: Add the fee average
         allFeeRates.put(Config.BTC_TX_FEE, averageFeeRate);

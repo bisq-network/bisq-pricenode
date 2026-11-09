@@ -28,6 +28,7 @@ import java.time.Instant;
 import java.util.Map;
 
 import static java.lang.Thread.sleep;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -60,6 +61,26 @@ public class MempoolFeeRateProviderTest {
         // Check that the FeeRateProvider returns a fee within the defined parameters
         assertTrue(retrievedFeeRate.getPrice() >= FeeRateProvider.MIN_FEE_RATE_FOR_TRADING);
         assertTrue(retrievedFeeRate.getPrice() <= FeeRateProvider.MAX_FEE_RATE);
+    }
+
+    @Test
+    public void doGet_halfHourFeeBelowTradingMin() {
+        MempoolFeeRateProvider feeRateProvider = new MempoolFeeRateProvider.First(env) {
+            @Override
+            protected Map<String, Long> getFeeRatePredictions() {
+                return Map.of(
+                        "fastestFee", 1L,
+                        "halfHourFee", 1L,
+                        "hourFee", 1L,
+                        "economyFee", 1L,
+                        "minimumFee", 1L);
+            }
+        };
+
+        FeeRate retrievedFeeRate = feeRateProvider.doGet();
+
+        assertEquals(2, retrievedFeeRate.getPrice());
+        assertEquals(1, retrievedFeeRate.getMinimumFee());
     }
 
     /**
