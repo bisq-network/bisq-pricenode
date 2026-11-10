@@ -24,18 +24,7 @@ import java.util.Set;
 @Slf4j
 public class CurrencyUtil {
     public static final Set<String> ALL_CRYPTO_CURRENCIES = Set.of(
-            "ACM", "ADE", "AEON", "AMIT", "ANI", "ARQ", "ASK", "AEUR", "AUS", "BSQ",
-            "BEAM", "DARX", "BTM", "BZC", "BLUR", "BLK-BURNT", "CRCL", "CTSC", "CASH2", "CHA",
-            "CLOAK", "XCP", "CRDS", "CROAT", "DST", "DAI", "D4RK", "DASH", "ONION",
-            "DXO", "DOGE", "DOI", "DONU", "DRGL", "EMC", "ERG", "ETH", "ETC", "ETHS",
-            "FAIR", "FRTY", "FJC", "GALI", "GMCN", "GENX", "GRIN", "HATCH", "HLM", "ZEN",
-            "IDA", "IRD", "KEK", "KYDC", "KORE", "ZOD", "LBC", "L-BTC", "LTC", "LCP",
-            "LTZ", "LYTX", "MSR", "MASK", "MILE", "MQX", "MOX", "MBGL", "XMR", "MUE",
-            "YCE", "NMC", "NAV", "NOR", "NTBC", "PENG", "PIVX", "PZDC", "PARS", "PART",
-            "PRSN", "PINK", "PLE", "QMCoin", "QBS", "QWC", "R-BTC", "RADS", "RMX", "RYO",
-            "SUB1X", "SCP", "SF", "SIL", "XSL", "SPACE", "XSPEC", "USDH", "USDT-E", "TUSD",
-            "TEO", "TRTL", "USDC", "UCC", "UNO", "VARIUS", "VXV", "VEIL", "VTC", "WORX",
-            "WEB", "WRKZ", "XDR0", "XRC", "ZEC", "XZC", "ZEL", "ZER", "ZERC", "XND", "UPX"
+            "BSQ", "DAI", "ETH", "LTC", "USDT-E", "USDC", "XMR"
     );
 
     public static final Set<String> ALL_FIAT_CURRENCIES = Set.of(

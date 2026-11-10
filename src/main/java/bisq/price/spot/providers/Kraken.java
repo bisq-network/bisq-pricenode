@@ -39,7 +39,7 @@ class Kraken extends ExchangeRateProvider {
     @Override
     public Set<ExchangeRate> doGet() {
         // Supported fiat: AUD, CAD, CHF, EUR, GBP, JPY, USD
-        // Supported alts: DASH, DOGE, ETC, ETH, LTC, XMR, ZEC
+        // Supported alts: DAI, ETH, LTC, USDC, USDT-E, XMR
         return doGet(KrakenExchange.class);
     }
 

@@ -38,7 +38,7 @@ class Poloniex extends ExchangeRateProvider {
     // volatility its rate can go stale/diverge and skew the aggregate average.
     // XMR/BTC is sourced from the more liquid Kraken, Bitfinex and KuCoin instead.
     private static final List<String> SUPPORTED_CURRENCIES =
-            List.of("DASH", "DOGE", "ETC", "ETH", "LTC", "ZEC");
+            List.of("ETH", "LTC");
     private static final String POLONIEX_URL = "https://api.poloniex.com/markets/price";
     private static final String PROVIDER_NAME = "POLO";
     public Poloniex(Environment env) {
@@ -74,7 +74,7 @@ class Poloniex extends ExchangeRateProvider {
         }
 
         public String getCurrency() {
-            // DASH_BTC, DOGE_BTC, LTC_BTC, ...
+            // ETH_BTC, LTC_BTC, ...
             return symbol.split("_")[0];
         }
 
