@@ -62,8 +62,8 @@ echo "[*] Cloning Bisq repo"
 sudo -H -i -u "${BISQ_USER}" git config --global advice.detachedHead false
 sudo -H -i -u "${BISQ_USER}" git clone --recursive --branch "${BISQ_REPO_TAG}" "${BISQ_REPO_URL}" "${BISQ_HOME}/${BISQ_REPO_NAME}"
 
-echo "[*] Installing OpenJDK 11"
-sudo -H -i -u "${ROOT_USER}" apt-get install -qq -y openjdk-11-jdk
+echo "[*] Installing OpenJDK 21"
+sudo -H -i -u "${ROOT_USER}" apt-get install -qq -y openjdk-21-jdk
 
 echo "[*] Checking out Bisq ${BISQ_LATEST_RELEASE}"
 sudo -H -i -u "${BISQ_USER}" sh -c "cd ${BISQ_HOME}/${BISQ_REPO_NAME} && git checkout ${BISQ_LATEST_RELEASE}"
