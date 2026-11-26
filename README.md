@@ -24,7 +24,7 @@ Operating a production pricenode is a valuable service to the Bisq network, and 
 
 To run a pricenode, you will need:
 
-  - JDK 8 if you want to build and run a node locally.
+  - JDK 21 if you want to build and run a node locally.
   - The `tor` binary (e.g. `brew install tor`) if you want to run a hidden service locally.
   
 ## Building source code
