@@ -42,4 +42,12 @@ class Bitfinex extends ExchangeRateProvider {
         // Supported alts: DAI, ETC, ETH, LTC, XMR, ZEC
         return doGet(BitfinexExchange.class);
     }
+
+    @Override
+    protected boolean requiresFilterDuringBulkTickerRetrieval() {
+        // The tickers of all symbols include perpetual swaps such as tLTCF0:BTCF0, which
+        // XChange maps to the same currency pair as the spot market (LTC/BTC). Requesting
+        // only the desired pairs keeps the swaps out.
+        return true;
+    }
 }

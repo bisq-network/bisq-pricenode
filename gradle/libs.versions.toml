@@ -4,7 +4,7 @@
 # Convention: mark all versions using 'strictly'. This ensures only one version is allowed in the dependency tree, even
 # when multiple versions are attempted to be brought in as transitive dependencies of other requirements.
 [versions]
-knowm-xchange-lib = { strictly = '5.2.2' }
+knowm-xchange-lib = { strictly = '5.2.5' }
 logback-lib = { strictly = '1.5.19' }
 lombok-lib = { strictly = '1.18.42' }
 spring-plugin-lib = { strictly = '4.0.6' }
